@@ -1,6 +1,28 @@
 # Openshift 3 Cookbook CHANGELOG
 This file is used to list changes made in each version of the Openshift 3 cookbook.
 
+## v2.0.49
+### Bug
+- Fix several Cloning resource attributes issues
+- Fix ETCD ca perms on certificate server
+
+## v2.0.48
+### Bug
+- Prevent Docker to reinstall or update without control
+
+## v2.0.47
+### Improvement
+- Asynchronous Errata Updates via variable asynchronous_upgrade (Default to false)
+
+## v2.0.46
+### Improvement
+- Add possibility to specify specific yum options when installing docker docker_yum_options
+- Add reverse lookup for SkyDNS
+
+## v2.0.45
+### Improvement
+- Give the possibilty to provide a custom location for '/etc/NetworkManager/dispatcher.d/99-origin-dns.sh'
+
 ## v2.0.44
 ### Improvement
 - Change the ETCD CA directory for the certificate server (Moving the certificate server becomes easier: mv /var/www/html)

@@ -129,7 +129,7 @@ if is_node_server
   if node['cookbook-openshift3']['adhoc_redeploy_cluster_ca']
     Chef::Log.warn("The CLUSTER CA CERTS redeploy will be skipped for Node[#{node['fqdn']}]. Could not find the flag: #{node['cookbook-openshift3']['redeploy_cluster_ca_nodes_control_flag']}") unless ::File.file?(node['cookbook-openshift3']['redeploy_cluster_ca_nodes_control_flag'])
 
-    ruby_block "Redeploy CA certs for #{node['fqdn']}" do
+    ruby_block "Redeploy CA certs for Node server: #{node['fqdn']}" do
       block do
         helper.remove_dir("#{node['cookbook-openshift3']['openshift_node_config_dir']}/#{node['fqdn']}.tgz*")
       end
@@ -219,15 +219,26 @@ if is_node_server
       notifies :restart, 'service[dnsmasq]', :immediately
     end
 
-    # On some systems, NetworkManager does not exist, so ignore_failure.
-    cookbook_file '/etc/NetworkManager/dispatcher.d/99-origin-dns.sh' do
-      source '99-origin-dns.sh'
-      owner 'root'
-      group 'root'
-      mode '0755'
-      action :create
-      ignore_failure true
-      notifies :restart, 'service[NetworkManager]', :immediately
+    if node['cookbook-openshift3']['custom_origin-dns']
+      remote_file 'Retrieve custom file for 99-origin-dns.sh' do
+        path '/etc/NetworkManager/dispatcher.d/99-origin-dns.sh'
+        source "file://#{node['cookbook-openshift3']['custom_origin_location']}"
+        owner 'root'
+        group 'root'
+        mode '0755'
+        notifies :restart, 'service[NetworkManager]', :immediately
+      end
+    else
+      # On some systems, NetworkManager does not exist, so ignore_failure.
+      cookbook_file '/etc/NetworkManager/dispatcher.d/99-origin-dns.sh' do
+        source '99-origin-dns.sh'
+        owner 'root'
+        group 'root'
+        mode '0755'
+        action :create
+        ignore_failure true
+        notifies :restart, 'service[NetworkManager]', :immediately
+      end
     end
 
     ruby_block 'Setup dnsmasq' do
