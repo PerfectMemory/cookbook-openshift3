@@ -1,3 +1,4 @@
+default['cookbook-openshift3']['openshift_hosted_logging_flag'] = '/usr/local/share/info/.logging'
 default['cookbook-openshift3']['openshift_logging_image_prefix'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'registry.access.redhat.com/openshift3/' : 'docker.io/openshift/origin-'
 default['cookbook-openshift3']['openshift_logging_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.7' : 'v3.7.1'
 default['cookbook-openshift3']['openshift_logging_install_logging'] = true
