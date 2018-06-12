@@ -197,6 +197,8 @@ default['cookbook-openshift3']['openshift_hosted_deploy_custom_router_file'] = '
 default['cookbook-openshift3']['openshift_hosted_deploy_custom_name'] = 'config-volume'
 default['cookbook-openshift3']['openshift_hosted_deploy_env_router'] = []
 default['cookbook-openshift3']['openshift_hosted_manage_router'] = true
+default['cookbook-openshift3']['openshift_hosted_router_deploy_shards'] = false
+default['cookbook-openshift3']['openshift_hosted_router_shard'] = []
 default['cookbook-openshift3']['openshift_hosted_router_selector'] = 'region=infra'
 default['cookbook-openshift3']['openshift_hosted_router_namespace'] = 'default'
 default['cookbook-openshift3']['openshift_hosted_router_options'] = []
