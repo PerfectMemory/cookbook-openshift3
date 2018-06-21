@@ -132,6 +132,15 @@ module OpenShiftHelper
       end
     end
 
+    def getdockerversion
+      if ::Mixlib::ShellOut.new('rpm -q docker').run_command.error?
+        node['cookbook-openshift3']['docker_version'].nil? || node['cookbook-openshift3']['docker_version'].split('.')[1].to_i >= 12
+      else
+        current_version = Mixlib::ShellOut.new('repoquery --plugins --installed --qf \'%{version}\' docker').run_command.stdout.strip
+        current_version.split('.')[1].to_i >= 12
+      end
+    end
+
     protected
 
     attr_reader :node
