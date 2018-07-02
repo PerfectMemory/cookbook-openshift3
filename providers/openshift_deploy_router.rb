@@ -51,7 +51,7 @@ action :create do
 
     deploy_options = %w(--selector=${selector_router} -n ${namespace_router}) + Array(new_resource.deployer_options)
     execute 'Deploy Hosted Router' do
-      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} adm router #{deploy_options.join(' ')} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig || true"
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} adm router #{deploy_options.join(' ')} --images=#{node['cookbook-openshift3']['openshift_docker_hosted_router_image']} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig || true"
       environment(
         'selector_router' => node['cookbook-openshift3']['openshift_hosted_router_selector'],
         'namespace_router' => node['cookbook-openshift3']['openshift_hosted_router_namespace']
@@ -63,7 +63,7 @@ action :create do
     if node['cookbook-openshift3']['openshift_hosted_router_deploy_shards']
       node['cookbook-openshift3']['openshift_hosted_router_shard'].each do |shard|
         execute "Deploy Hosted Router for sharding[#{shard['service_account']}]" do
-          command "#{node['cookbook-openshift3']['openshift_common_client_binary']} adm router router-#{shard['service_account']} --selector=${selector_router} --service-account=#{shard['service_account']} -n ${namespace_router} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig || true"
+          command "#{node['cookbook-openshift3']['openshift_common_client_binary']} adm router router-#{shard['service_account']} --images=#{node['cookbook-openshift3']['openshift_docker_hosted_router_image']} --selector=${selector_router} --service-account=#{shard['service_account']} -n ${namespace_router} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig || true"
           environment(
             'selector_router' => shard['selector'],
             'namespace_router' => shard['namespace']
