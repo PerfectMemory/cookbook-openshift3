@@ -38,7 +38,7 @@ end
 
 if node['cookbook-openshift3']['openshift_hosted_deploy_custom_router'] && ::File.exist?(node['cookbook-openshift3']['openshift_hosted_deploy_custom_router_file'])
   execute 'Update ConfigMap of the customised Hosted Router' do
-    command "#{node['cookbook-openshift3']['openshift_common_client_binary']} create configmap customrouter --from-file=haproxy-config.template=#{node['cookbook-openshift3']['openshift_hosted_deploy_custom_router_file']} -n ${namespace_router} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig --dry-run -o yaml | #{node['cookbook-openshift3']['openshift_common_client_binary']} replace -f -"
+    command "#{node['cookbook-openshift3']['openshift_common_client_binary']} create configmap customrouter --from-file=haproxy-config.template=#{node['cookbook-openshift3']['openshift_hosted_deploy_custom_router_file']} -n ${namespace_router} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig --dry-run -o yaml | #{node['cookbook-openshift3']['openshift_common_client_binary']} replace -f - -n ${namespace_router}"
     environment(
       'namespace_router' => node['cookbook-openshift3']['openshift_hosted_router_namespace']
     )

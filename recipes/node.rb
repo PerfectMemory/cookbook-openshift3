@@ -201,7 +201,7 @@ if is_node_server
     not_if { node['cookbook-openshift3']['upgrade'] }
   end
 
-  if node['cookbook-openshift3']['deploy_dnsmasq']
+  if helper.get_nodevar('deploy_dnsmasq')
     package 'NetworkManager' do
       retries 3
     end
@@ -214,15 +214,20 @@ if is_node_server
     template '/etc/dnsmasq.d/origin-dns.conf' do
       source 'origin-dns.conf.erb'
       variables(
-        ose_major_version: ose_major_version
+        ose_major_version: ose_major_version,
+        openshift_node_dnsmasq_log_queries: helper.get_nodevar('openshift_node_dnsmasq_log_queries'),
+        openshift_node_dnsmasq_cache_size: helper.get_nodevar('openshift_node_dnsmasq_cache_size'),
+        openshift_node_dnsmasq_maxcachettl: helper.get_nodevar('openshift_node_dnsmasq_maxcachettl'),
+        openshift_node_dnsmasq_interface: helper.get_nodevar('openshift_node_dnsmasq_interface'),
+        openshift_node_dnsmasq_bind_interface: helper.get_nodevar('openshift_node_dnsmasq_bind_interface')
       )
       notifies :restart, 'service[dnsmasq]', :immediately
     end
 
-    if node['cookbook-openshift3']['custom_origin-dns']
+    if helper.get_nodevar('custom_origin-dns')
       remote_file 'Retrieve custom file for 99-origin-dns.sh' do
         path '/etc/NetworkManager/dispatcher.d/99-origin-dns.sh'
-        source "file://#{node['cookbook-openshift3']['custom_origin_location']}"
+        source "file://#{helper.get_nodevar('custom_origin_location')}"
         owner 'root'
         group 'root'
         mode '0755'
@@ -270,6 +275,7 @@ if is_node_server
   template node['cookbook-openshift3']['openshift_node_config_file'] do
     source 'node.yaml.erb'
     variables(
+      osn_cluster_dns_ip: helper.get_nodevar('osn_cluster_dns_ip'),
       node_labels: node_servers.find { |server_node| server_node['fqdn'] == node['fqdn'] }['labels'].to_s.split(' '),
       ose_major_version: ose_major_version,
       kubelet_args: node['cookbook-openshift3']['openshift_node_kubelet_args_default'].merge(node['cookbook-openshift3']['openshift_node_kubelet_args_custom'])

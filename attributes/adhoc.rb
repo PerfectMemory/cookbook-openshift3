@@ -12,6 +12,6 @@ default['cookbook-openshift3']['redeploy_cluster_ca_masters_control_flag'] = '/t
 default['cookbook-openshift3']['redeploy_cluster_ca_nodes_control_flag'] = '/to_be_replaced_nodes'
 default['cookbook-openshift3']['redeploy_cluster_hosted_certserver_control_flag'] = '/to_be_replaced_hosted_cluster'
 
-default['cookbook-openshift3']['adhoc_uninstall_control_flag'] = '/root/uninstall_node'
+default['cookbook-openshift3']['adhoc_reset_control_flag'] = '/to_be_reset_node'
 
 default['cookbook-openshift3']['adhoc_turn_off_openshift3_cookbook'] = '/to_be_replaced_turn_off_openshift3_cookbook'
