@@ -124,6 +124,23 @@ module OpenShiftHelper
       ca_exist && !dir_exist
     end
 
+    def get_nodevar(var)
+      if node_servers.any? { |server_node| server_node['fqdn'] == node['fqdn'] && server_node.key?(var) }
+        node_servers.find { |server_node| server_node['fqdn'] == node['fqdn'] }[var.to_s]
+      else
+        node['cookbook-openshift3'][var.to_s]
+      end
+    end
+
+    def getdockerversion
+      if ::Mixlib::ShellOut.new('rpm -q docker').run_command.error?
+        node['cookbook-openshift3']['docker_version'].nil? || node['cookbook-openshift3']['docker_version'].split('.')[1].to_i >= 12
+      else
+        current_version = Mixlib::ShellOut.new('repoquery --plugins --installed --qf \'%{version}\' docker').run_command.stdout.strip
+        current_version.split('.')[1].to_i >= 12
+      end
+    end
+
     protected
 
     attr_reader :node

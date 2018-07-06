@@ -29,6 +29,38 @@ This cookbook does support upgrade between major versions (Read doc)
 
 - Control upgrades between versions
 - ETCD migration v2 to v3 (Mandatory before upgrading to 3.7)
+- Node vars override variables
+
+Supported Node Variables:
+
+| NAME |
+| ---------------- |
+| deploy_dnsmasq |
+| custom_origin-dns |
+| custom_origin_location |
+| osn_cluster_dns_ip |
+
+In the following example, DNSMASQ will only be deployed on mynodeoverride.domain.local (Being overrided by local vars)
+
+```json
+  "override_attributes": {
+    "cookbook-openshift3": {
+      "deploy_dnsmasq": false,
+      "node_servers": [
+        {
+          "fqdn": "mynode.domain.local",
+          "ipaddress": "1.1.1.1"
+        },
+        {
+          "fqdn": "mynodeoverride.domain.local",
+          "ipaddress": "1.2.2.2",
+          "deploy_dnsmasq": true
+        }
+      ],
+      ....
+    }
+  }
+```
 
 ### Supported version
 [x] 1.3 to 1.4
@@ -242,6 +274,53 @@ Example of enabling a specific "feature-gate": enabling the [persistent local vo
   "openshift_node_kubelet_args_custom": {
     "feature-gates": ["PersistentLocalVolumes=true"]
   }
+}
+```
+
+* `node['cookbook-openshift3']['openshift_hosted_router_deploy_shards']`
+
+Any ENV options can be set for the sharding router, as long as they are supported by the current documentation [Set ENV for router sharding](https://docs.openshift.com/container-platform/latest/install_config/router/default_haproxy_router.html#modifying-router-shards).
+
+** The dedicated service account must have access to the hostnetwork SCC **
+
+Example of options for deploying router sharding:
+```json
+{
+  "....."
+  "openshift_hosted_router_deploy_shards": true,
+  "openshift_hosted_router_shard":[
+    {
+      "namespace": "custom-shard1",
+      "service_account": "shard1",
+      "selector": "region=shard1",
+      "env": [
+        "ROUTE_LABELS='shard1=yes'"
+      ]
+    },
+    {
+      "namespace": "custom-shard2",
+      "service_account": "shard2",
+      "selector": "region=shard2",
+      "custom_router_file": "/folder/custom_template_forshard2",
+      "env": [
+        "NAMESPACE_LABELS='dept != finance'",
+      ]
+    },
+  ],
+  "openshift_common_service_accounts_additional": [
+    { 
+      "name": "shard1", 
+      "namespace": "shard1", 
+      "scc": ["hostnetwork"] 
+    },
+    { 
+      "name": "shard2", 
+      "namespace": "custom-shard2", 
+      "scc": ["hostnetwork"] 
+    }
+
+  ],
+  "....."
 }
 ```
 

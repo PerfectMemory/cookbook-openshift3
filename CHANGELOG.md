@@ -1,7 +1,56 @@
 # Openshift 3 Cookbook CHANGELOG
 This file is used to list changes made in each version of the Openshift 3 cookbook.
 
-## v2.0.58
+## v2.0.72
+### Bug
+- Fix issue when deploying router and registry v1/3.5+ on premise. (Default to iexternal redhat registry)
+  Possibilty to specify openshift_docker_hosted_registry_image or openshift_docker_hosted_router_image
+
+## v2.0.71
+### Bug
+- Fix issue with nodes after upgrading and until removing the flag (Keep restarting the openvswitch)
+
+## v2.0.70
+### Bug
+- Fix issue DNS does not work over TCP from pod (Adjusting DNSMasq binding interfaces) < 3.6
+
+## v2.0.69
+### Bug
+- Fix issue when ussing docker 1.12+ (https://bugzilla.redhat.com/show_bug.cgi?id=1502560)
+
+## v2.0.68
+### Bug
+- Fix typo when upgrading ConfigMap of the customised Hosted Router
+
+## v2.0.67
+### Bug
+- Fix typo when applying openshift_node_kubelet_args_custom
+
+## v2.0.66
+### Improvement
+- Give the possibility of controlling dnsmasq openshift_node_dnsmasq_log_queries (false) openshift_node_dnsmasq_cache_size (150) openshift_node_dnsmasq_maxcachettl (1)
+- Improve the node reset mechanism (Deleting master and node directories)
+
+## v2.0.65
+### Improvement
+- Give the possibility to override global variables at the node level ((Read README) 
+- Give possibility to override sharding router template location file
+
+## v2.0.63-64
+### Bug 
+- Fix issue when resetting a master node
+- Fix issue when resetting an ETCD node
+- Fix several Cloning resource attributes issues
+
+## v2.0.62
+### Improvement
+- Give the possibility to reset a node including the docker-storage thin-pool (If it is in used) adhoc_reset_control_flag
+
+## v2.0.60-61
+### Improvement
+- Give the possibility to deploy router sharding (Read README)
+
+## v2.0.58-59
 ### Improvement
 - Improve metrics deployment logic
 

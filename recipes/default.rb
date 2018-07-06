@@ -17,12 +17,8 @@ end
 
 include_recipe 'cookbook-openshift3::ca_bundle_fix'
 
-if ::File.file?(node['cookbook-openshift3']['adhoc_uninstall_control_flag'])
-  include_recipe 'cookbook-openshift3::adhoc_uninstall'
-
-  file node['cookbook-openshift3']['adhoc_uninstall_control_flag'] do
-    action :delete
-  end
+if ::File.file?(node['cookbook-openshift3']['adhoc_reset_control_flag'])
+  include_recipe 'cookbook-openshift3::adhoc_reset'
 end
 
 include_recipe 'cookbook-openshift3::services'

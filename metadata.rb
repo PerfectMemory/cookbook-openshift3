@@ -7,7 +7,7 @@ issues_url 'https://github.com/IshentRas/cookbook-openshift3/issues'
 description 'Installs/Configures Openshift 3.x (>= 3.3)'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 chef_version '>= 12.4' if respond_to?(:chef_version)
-version '2.0.58'
+version '2.0.72'
 supports 'redhat', '>= 7.1'
 supports 'centos', '>= 7.1'
 
@@ -21,6 +21,7 @@ recipe 'cookbook-openshift3::adhoc_redeploy_certificates', 'Redeploy certificate
 recipe 'cookbook-openshift3::adhoc_redeploy_cluster_ca', 'Redeploy OpenShift certificates'
 recipe 'cookbook-openshift3::adhoc_redeploy_etcd_ca', 'Redeploy ETCD CA certificates'
 recipe 'cookbook-openshift3::adhoc_uninstall', 'Adhoc action for uninstalling Openshift from server'
+recipe 'cookbook-openshift3::adhoc_reset', 'Adhoc action for resetting server (Keeping OCP configurations, Certificates, ETCD DATA)'
 recipe 'cookbook-openshift3::certificate_server', 'Configure the certificate server'
 recipe 'cookbook-openshift3::cloud_provider', 'Configure cloud providers'
 recipe 'cookbook-openshift3::common', 'Apply common packages'
