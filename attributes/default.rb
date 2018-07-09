@@ -143,7 +143,6 @@ default['cookbook-openshift3']['openshift_master_deserialization_cache_size'] = 
 default['cookbook-openshift3']['openshift_master_pod_eviction_timeout'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_message'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_template'] = ''
-default['cookbook-openshift3']['openshift_master_logging_public_url'] = nil
 default['cookbook-openshift3']['openshift_master_router_subdomain'] = 'cloudapps.domain.local'
 default['cookbook-openshift3']['openshift_master_sdn_cluster_network_cidr'] = '10.128.0.0/14'
 default['cookbook-openshift3']['openshift_master_sdn_host_subnet_length'] = '9'
@@ -219,6 +218,7 @@ default['cookbook-openshift3']['openshift_hosted_manage_registry'] = true
 default['cookbook-openshift3']['openshift_hosted_registry_selector'] = 'region=infra'
 default['cookbook-openshift3']['openshift_hosted_registry_namespace'] = 'default'
 
+default['cookbook-openshift3']['openshift_hosted_cluster_logging'] = false
 default['cookbook-openshift3']['openshift_hosted_cluster_metrics'] = false
 
 default['cookbook-openshift3']['erb_corsAllowedOrigins'] = ['127.0.0.1', 'localhost', node['cookbook-openshift3']['openshift_common_public_hostname']].uniq + node['cookbook-openshift3']['openshift_common_svc_names']
