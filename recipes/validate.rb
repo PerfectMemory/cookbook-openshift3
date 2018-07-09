@@ -64,6 +64,11 @@ if node['cookbook-openshift3']['openshift_hosted_deploy_custom_router']
   Chef::Log.warn("The custom router file \"#{node['cookbook-openshift3']['openshift_hosted_deploy_custom_router_file']}\" cannot be found") unless ::File.exist?(node['cookbook-openshift3']['openshift_hosted_deploy_custom_router_file'])
 end
 
+if node['cookbook-openshift3']['openshift_logging_install_logging'] && node['cookbook-openshift3']['openshift_hosted_cluster_logging']
+  Chef::Log.error("openshift_logging_es_cluster_size (#{node['cookbook-openshift3']['openshift_logging_es_cluster_size']}) should be an odd number") if node['cookbook-openshift3']['openshift_logging_es_cluster_size'].to_i.even?
+  node.run_state['issues_detected'] = true if node['cookbook-openshift3']['openshift_logging_es_cluster_size'].to_i.even?
+end
+
 unless master_servers.is_a?(Array)
   Chef::Log.error('master_servers not an array')
   node.run_state['issues_detected'] = true

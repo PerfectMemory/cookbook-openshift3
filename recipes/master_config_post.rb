@@ -176,6 +176,14 @@ openshift_deploy_metrics 'Deploy Cluster Metrics' do
   end
 end
 
+openshift_deploy_logging 'Remove Cluster Logging' do
+  action :delete
+  only_if do
+    node['cookbook-openshift3']['openshift_hosted_cluster_logging'] &&
+      !node['cookbook-openshift3']['openshift_logging_install_logging']
+  end
+end
+
 openshift_deploy_logging 'Deploy Cluster Logging' do
   only_if do
     node['cookbook-openshift3']['openshift_hosted_cluster_logging'] &&

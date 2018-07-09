@@ -19,6 +19,7 @@ default['cookbook-openshift3']['openshift_metrics_duration'] = '7'
 default['cookbook-openshift3']['openshift_metrics_hawkular_ca'] = ''
 default['cookbook-openshift3']['openshift_metrics_hawkular_cert'] = ''
 default['cookbook-openshift3']['openshift_metrics_hawkular_hostname'] = "hawkular-metrics.#{node['cookbook-openshift3']['openshift_master_router_subdomain']}"
+default['cookbook-openshift3']['openshift_metrics_url'] = "https://#{node['cookbook-openshift3']['openshift_metrics_hawkular_hostname']}/hawkular/metrics"
 default['cookbook-openshift3']['openshift_metrics_hawkular_key'] = ''
 default['cookbook-openshift3']['openshift_metrics_hawkular_limits_cpu'] = ''
 default['cookbook-openshift3']['openshift_metrics_hawkular_limits_memory'] = '2.5G'

@@ -1,6 +1,9 @@
 default['cookbook-openshift3']['openshift_hosted_logging_flag'] = '/usr/local/share/info/.logging'
+default['cookbook-openshift3']['openshift_logging_install_eventrouter'] = false
 default['cookbook-openshift3']['openshift_logging_image_prefix'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'registry.access.redhat.com/openshift3/' : 'docker.io/openshift/origin-'
+default['cookbook-openshift3']['openshift_logging_proxy_image_prefix'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'registry.access.redhat.com/openshift3/' : 'docker.io/openshift/'
 default['cookbook-openshift3']['openshift_logging_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.7' : 'v3.7.1'
+default['cookbook-openshift3']['openshift_logging_proxy_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.7' : 'v1.0.0'
 default['cookbook-openshift3']['openshift_logging_install_logging'] = true
 
 default['cookbook-openshift3']['openshift_logging_use_ops'] = false
@@ -22,6 +25,7 @@ default['cookbook-openshift3']['openshift_logging_curator_ops_memory_limit'] = '
 default['cookbook-openshift3']['openshift_logging_curator_ops_nodeselector'] = {}
 
 default['cookbook-openshift3']['openshift_logging_kibana_hostname'] = "kibana.#{node['cookbook-openshift3']['openshift_master_router_subdomain']}"
+default['cookbook-openshift3']['openshift_logging_kibana_url'] = "https://#{node['cookbook-openshift3']['openshift_logging_kibana_hostname']}"
 default['cookbook-openshift3']['openshift_logging_kibana_cpu_limit'] = ''
 default['cookbook-openshift3']['openshift_logging_kibana_memory_limit'] = '736Mi'
 default['cookbook-openshift3']['openshift_logging_kibana_proxy_debug'] = false
@@ -65,6 +69,15 @@ default['cookbook-openshift3']['openshift_logging_kibana_ops_key'] = ''
 # for the public facing ops kibana certs
 default['cookbook-openshift3']['openshift_logging_kibana_ops_ca'] = ''
 
+default['cookbook-openshift3']['openshift_logging_fluentd_file_buffer_limit'] = '256Mi'
+default['cookbook-openshift3']['openshift_logging_fluentd_aggregating_secure'] = 'no'
+default['cookbook-openshift3']['openshift_logging_fluentd_aggregating_host'] = '${HOSTNAME}'
+default['cookbook-openshift3']['openshift_logging_fluentd_aggregating_cert_path'] = 'none'
+default['cookbook-openshift3']['openshift_logging_fluentd_aggregating_key_path'] = 'none'
+default['cookbook-openshift3']['openshift_logging_fluentd_aggregating_passphrase'] = 'none'
+default['cookbook-openshift3']['openshift_logging_fluentd_aggregating_strict'] = 'no'
+default['cookbook-openshift3']['openshift_logging_fluentd_aggregating_port'] = 24_284
+default['cookbook-openshift3']['openshift_logging_fluentd_deployment_type'] = 'hosted'
 default['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'] = { 'logging-infra-fluentd' => true }
 default['cookbook-openshift3']['openshift_logging_fluentd_cpu_limit'] = '100m'
 default['cookbook-openshift3']['openshift_logging_fluentd_memory_limit'] = '512Mi'
@@ -76,6 +89,12 @@ default['cookbook-openshift3']['openshift_logging_fluentd_hosts'] = %w(--all)
 default['cookbook-openshift3']['openshift_logging_fluentd_buffer_queue_limit'] = 1024
 default['cookbook-openshift3']['openshift_logging_fluentd_buffer_size_limit'] = '1m'
 
+default['cookbook-openshift3']['openshift_logging_elasticsearch_prometheus_sa'] = 'system:serviceaccount:openshift-metrics:prometheus'
+default['cookbook-openshift3']['openshift_logging_elasticsearch_cpu_request'] = '1000m'
+default['cookbook-openshift3']['openshift_logging_elasticsearch_proxy_memory_limit'] = '64Mi'
+default['cookbook-openshift3']['openshift_logging_elasticsearch_proxy_cpu_request'] = '100m'
+default['cookbook-openshift3']['openshift_logging_elasticsearch_kibana_index_mode'] = 'unique'
+default['cookbook-openshift3']['openshift_logging_elasticsearch_deployment_type'] = 'data-master'
 default['cookbook-openshift3']['openshift_logging_es_host'] = 'logging-es'
 default['cookbook-openshift3']['openshift_logging_es_port'] = 9200
 default['cookbook-openshift3']['openshift_logging_es_ca'] = '/etc/fluent/keys/ca'

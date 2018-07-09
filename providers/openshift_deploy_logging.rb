@@ -73,7 +73,10 @@ end
 
 action :delete do
   converge_by "Uninstalling Logging on #{node['fqdn']}" do
-    directory "#{FOLDER}/templates" do
+    CERT_FOLDER = node['cookbook-openshift3']['openshift_common_base_dir'] + '/logging'
+
+    directory 'Create temp directory for logging' do
+      path FOLDER
       recursive true
     end
 
@@ -81,13 +84,99 @@ action :delete do
       source "file://#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
       sensitive true
     end
+
+    execute 'Remove Fluentd Labels for nodes' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node --all ${key}- --config=#{FOLDER}/admin.kubeconfig"
+      environment(
+        'key' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].keys.first.to_s
+      )
+    end
+
+    execute 'Scaling down cluster before deletion (Curator, ES and Kibana)' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=logging-infra -o name \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} | \
+              xargs --no-run-if-empty #{node['cookbook-openshift3']['openshift_common_client_binary']} scale \
+              --replicas=0 --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']}"
+    end
+
+    execute 'Delete logging api objects' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete dc,rc,svc,routes,templates,daemonset,is --selector=logging-infra \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+    end
+
+    execute 'Delete oauthclient kibana-proxy' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete oauthclient kibana-proxy \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+    end
+
+    execute 'Delete logging secrets' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete secret logging-fluentd logging-elasticsearch logging-kibana logging-kibana-proxy logging-curator \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+    end
+
+    execute 'Delete logging service accounts' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete secret,serviceaccount aggregated-logging-elasticsearch aggregated-logging-kibana aggregated-logging-curator aggregated-logging-fluentd \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+    end
+
+    execute 'Delete logging rolebindings' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete rolebinding logging-elasticsearch-view-role \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+    end
+
+    execute 'Delete logging cluster role bindings' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete rolebinding logging-elasticsearch-view-role \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+    end
+
+    execute 'Delete logging configmaps' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete configmap logging-elasticsearch logging-curator logging-fluentd \
+              --config=#{FOLDER}/admin.kubeconfig \
+              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+    end
+
+    execute 'Remove privileged permissions for fluentd' do
+      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy remove-scc-from-user privileged system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd --config=#{FOLDER}/admin.kubeconfig"
+    end
+
+    execute 'Remove cluster-reader permissions for fluentd' do
+      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy remove-cluster-role-from-user cluster-reader system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd --config=#{FOLDER}/admin.kubeconfig"
+    end
+
+    directory FOLDER do
+      recursive true
+      action :delete
+    end
+
+    directory CERT_FOLDER do
+      recursive true
+      action :delete
+    end
+
+    file node['cookbook-openshift3']['openshift_hosted_logging_flag'] do
+      action :delete
+    end
   end
 end
 
 action :create do
   converge_by "Deploying Logging on #{node['fqdn']}" do
     ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
-    FOLDER_LOGGING = ose_major_version.split('.')[1].to_i < 6 ? 'logging_legacy' : 'logging_36'
+    FOLDER_LOGGING = case ose_major_version.split('.')[1].to_i
+                     when 6
+                       'logging_36'
+                     when 7
+                       'logging_37'
+                     else
+                       'logging_legacy'
+                     end
     CERT_FOLDER = node['cookbook-openshift3']['openshift_common_base_dir'] + '/logging'
     OAUTH_SECRET = random_password(64)
 
@@ -251,7 +340,7 @@ action :create do
         es_number_of_replicas: node['cookbook-openshift3']['openshift_logging_es_number_of_replicas'],
         es_number_of_shards: node['cookbook-openshift3']['openshift_logging_es_number_of_shards'],
         allow_cluster_reader: node['cookbook-openshift3']['openshift_logging_es_ops_allow_cluster_reader'],
-        es_min_masters: node['cookbook-openshift3']['openshift_logging_es_cluster_size']
+        es_min_masters: node['cookbook-openshift3']['openshift_logging_es_cluster_size'].to_i == 1 ? '1' : node['cookbook-openshift3']['openshift_logging_es_cluster_size'].to_i / 2 + 1
       )
     end
 
@@ -273,9 +362,20 @@ action :create do
     end
 
     %w(fluent.conf fluentd-throttle-config.yaml secure-forward.conf).each do |fluent|
+      next if ose_major_version.split('.')[1].to_i >= 6 && fluent == 'fluent.conf'
       cookbook_file "#{FOLDER}/#{fluent}" do
         source "logging/#{fluent}"
       end
+    end
+
+    template "#{FOLDER}/fluent.conf" do
+      source "#{FOLDER_LOGGING}/fluent.conf.erb"
+      sensitive true
+      variables(
+        deploy_type: %w(hosted secure-aggregator secure-host).include?(node['cookbook-openshift3']['openshift_logging_fluentd_deployment_type']) ? true : false,
+        openshift_logging_fluentd_shared_key: random_password(128)
+      )
+      only_if { ose_major_version.split('.')[1].to_i >= 6 }
     end
 
     execute 'Generating configmap fluentd' do
@@ -286,7 +386,7 @@ action :create do
  			        --from-file=secure-forward.conf=#{FOLDER}/secure-forward.conf -o yaml --dry-run > #{FOLDER}/templates/logging-fluentd-configmap.yaml"
     end
 
-    %w(elasticsearch kibana fluentd fluentd).each do |serviceaccount|
+    %w(elasticsearch kibana fluentd curator).each do |serviceaccount|
       ruby_block "Create Service Account for #{serviceaccount}" do
         block do
           sa = { 'metadata' => { 'name' => "aggregated-logging-#{serviceaccount}" } }
@@ -299,8 +399,19 @@ action :create do
       block do
         services = [{ 'metadata' => { 'name' => 'logging-es', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es' }, 'ports' => [{ 'port' => 9200, 'targetPort' => 'restapi' }] }, { 'metadata' => { 'name' => 'logging-es-cluster', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es' }, 'ports' => [{ 'name' => 'cql-port', 'port' => 9300 }] }, { 'metadata' => { 'name' => 'logging-kibana', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'kibana' }, 'ports' => [{ 'port' => 443, 'targetPort' => 'oaproxy' }] }, { 'metadata' => { 'name' => 'logging-es-ops', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es-ops' }, 'ports' => [{ 'port' => 9200, 'targetPort' => 'restapi' }] }, { 'metadata' => { 'name' => 'logging-es-ops-cluster', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es-ops' }, 'ports' => [{ 'name' => 'cql-port', 'port' => 9300 }] }, { 'metadata' => { 'name' => 'logging-kibana-ops', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'kibana-ops' }, 'ports' => [{ 'port' => 443, 'targetPort' => 'oaproxy' }] }]
         services.each do |svc|
-          next unless node['cookbook-openshift3']['openshift_logging_use_ops'] && svc['metadata']['name'].match?(/-ops/)
+          next if !node['cookbook-openshift3']['openshift_logging_use_ops'] && /-ops/ =~ svc['metadata']['name']
           generate_services(svc)
+        end
+      end
+    end
+
+    if ose_major_version.split('.')[1].to_i >= 7
+      ruby_block 'Set logging-es-prometheus service' do
+        block do
+          services = [{ 'metadata' => { 'name' => 'logging-es-prometheus', 'labels' => { 'logging-infra' => 'support' }, 'annotations' => { 'service.alpha.openshift.io/serving-cert-secret-name' => 'prometheus-tls', 'prometheus.io/scrape' => 'true', 'prometheus.io/scheme' => 'https', 'prometheus.io/path' => '_prometheus/metrics' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es' }, 'ports' => [{ 'name' => 'proxy', 'port' => 443, 'targetPort' => 4443 }] }]
+          services.each do |svc|
+            generate_services(svc)
+          end
         end
       end
     end
@@ -317,28 +428,35 @@ action :create do
       block do
         role = { 'metadata' => { 'name' => 'rolebinding-reader' }, 'rules' => [{ 'resources' => ['clusterrolebindings'], 'verbs' => %w(get) }], 'cluster' => true }
         rolebinding = { 'metadata' => { 'name' => 'logging-elasticsearch-view-role' }, 'rolerefs' => { 'name' => 'view' }, 'subjects' => [{ 'kind' => 'ServiceAccount', 'name' => 'aggregated-logging-elasticsearch' }] }
-        routes = [{ 'metadata' => { 'name' => 'logging-kibana', 'labels' => { 'component' => 'support', 'logging-infra' => 'support', 'provider' => 'openshift' } }, 'spec' => { 'host' => node['cookbook-openshift3']['openshift_logging_kibana_hostname'], 'to' => { 'kind' => 'Service', 'name' => 'logging-kibana' }, 'tls' => { 'termination' => 'reencrypt', 'caCertificate' => ::File.read("#{FOLDER}/ca.crt"), 'destinationCACertificate' => ::File.read("#{FOLDER}/ca.crt"), 'insecureEdgeTerminationPolicy' => node['cookbook-openshift3']['openshift_logging_kibana_edge_term_policy'] } } }, { 'metadata' => { 'name' => 'logging-kibana-ops', 'labels' => { 'component' => 'support', 'logging-infra' => 'support', 'provider' => 'openshift' } }, 'spec' => { 'host' => node['cookbook-openshift3']['openshift_logging_kibana_ops_hostname'], 'to' => { 'kind' => 'Service', 'name' => 'logging-kibana-ops' }, 'tls' => { 'termination' => 'reencrypt', 'caCertificate' => ::File.read("#{FOLDER}/ca.crt"), 'destinationCACertificate' => ::File.read("#{FOLDER}/ca.crt"), 'insecureEdgeTerminationPolicy' => node['cookbook-openshift3']['openshift_logging_kibana_edge_term_policy'] } } }]
+        routes = [{ 'metadata' => { 'name' => 'logging-kibana', 'labels' => { 'component' => 'support', 'logging-infra' => 'support', 'provider' => 'openshift' } }, 'spec' => { 'host' => node['cookbook-openshift3']['openshift_logging_kibana_hostname'], 'to' => { 'kind' => 'Service', 'name' => 'logging-kibana' }, 'tls' => { 'termination' => 'reencrypt', 'caCertificate' => ::File.read("#{FOLDER}/ca.crt"), 'destinationCACertificate' => ::File.read("#{FOLDER}/ca.crt"), 'insecureEdgeTerminationPolicy' => ose_major_version.split('.')[1].to_i >= 5 ? node['cookbook-openshift3']['openshift_logging_kibana_edge_term_policy'] : '' } } }, { 'metadata' => { 'name' => 'logging-kibana-ops', 'labels' => { 'component' => 'support', 'logging-infra' => 'support', 'provider' => 'openshift' } }, 'spec' => { 'host' => node['cookbook-openshift3']['openshift_logging_kibana_ops_hostname'], 'to' => { 'kind' => 'Service', 'name' => 'logging-kibana-ops' }, 'tls' => { 'termination' => 'reencrypt', 'caCertificate' => ::File.read("#{FOLDER}/ca.crt"), 'destinationCACertificate' => ::File.read("#{FOLDER}/ca.crt"), 'insecureEdgeTerminationPolicy' => ose_major_version.split('.')[1].to_i >= 5 ? node['cookbook-openshift3']['openshift_logging_kibana_edge_term_policy'] : '' } } }]
         generate_roles(role)
         generate_rolebindings(rolebinding)
         routes.each do |route|
-          next unless node['cookbook-openshift3']['openshift_logging_use_ops'] && route['metadata']['name'].match?(/-ops/)
+          next if !node['cookbook-openshift3']['openshift_logging_use_ops'] && /-ops/ =~ route['metadata']['name']
           generate_routes(route)
         end
       end
     end
 
-    template "#{FOLDER}/templates/logging-es-dc.yaml" do
-      source "#{FOLDER_LOGGING}/es.erb"
-      sensitive true
-      variables(
-        component: 'es',
-        deploy_name: "logging-es-#{DC_CHARS.sort_by { rand }.join[0...8]}",
-        logging_component: 'elasticsearch',
-        deploy_name_prefix: 'logging-es',
-        image: "#{node['cookbook-openshift3']['openshift_logging_image_prefix']}logging-elasticsearch:#{node['cookbook-openshift3']['openshift_logging_image_version']}",
-        es_cluster_name: 'es',
-        es_memory_limit: node['cookbook-openshift3']['openshift_logging_es_memory_limit']
-      )
+    1.upto(node['cookbook-openshift3']['openshift_logging_es_cluster_size'].to_i) do |es_num|
+      template "#{FOLDER}/templates/logging-es-dc-#{es_num}.yaml" do
+        source "#{FOLDER_LOGGING}/es.erb"
+        sensitive true
+        variables(
+          component: 'es',
+          cookie_secret: Base64.strict_encode64(random_password(16)),
+          basic_auth_passwd: random_password(16),
+          deploy_name: "logging-es-#{DC_CHARS.sort_by { rand }.join[0...8]}",
+          deploy_type: %w(data-master master data-client).include?(node['cookbook-openshift3']['openshift_logging_elasticsearch_deployment_type']) ? 'true' : false,
+          logging_component: 'elasticsearch',
+          deploy_name_prefix: 'logging-es',
+          image: "#{node['cookbook-openshift3']['openshift_logging_image_prefix']}logging-elasticsearch:#{node['cookbook-openshift3']['openshift_logging_image_version']}",
+          proxy_image: "#{node['cookbook-openshift3']['openshift_logging_proxy_image_prefix']}oauth-proxy:#{node['cookbook-openshift3']['openshift_logging_proxy_image_version']}",
+          es_cluster_name: 'es',
+          es_memory_limit: node['cookbook-openshift3']['openshift_logging_es_memory_limit'],
+          es_cpu_request: node['cookbook-openshift3']['openshift_logging_elasticsearch_cpu_request']
+        )
+      end
     end
 
     template "#{FOLDER}/templates/logging-kibana-dc.yaml" do
@@ -383,6 +501,17 @@ action :create do
       )
     end
 
+    execute 'Set rolebinding-reader permissions for ES' do
+      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user rolebinding-reader system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch --config=#{FOLDER}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrole/rolebinding-reader -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch"
+    end
+
+    execute 'Set auth-delegator permissions for ES' do
+      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user system:auth-delegator system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch --config=#{FOLDER}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrole/system:auth-delegator -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch"
+      only_if { ose_major_version.split('.')[1].to_i >= 7 }
+    end
+
     execute 'Set privileged permissions for fluentd' do
       command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-scc-to-user privileged system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd --config=#{FOLDER}/admin.kubeconfig"
       not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get scc/privileged -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd"
@@ -393,42 +522,50 @@ action :create do
       not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrolebinding/cluster-readers -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd"
     end
 
-    execute 'Applying template files' do
-      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} apply -f \
-              #{FOLDER}/templates \
-              --config=#{FOLDER}/admin.kubeconfig \
-              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']}"
-    end
+    unless ::File.file?(node['cookbook-openshift3']['openshift_hosted_logging_flag'])
+      execute 'Applying template files' do
+        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} apply -f \
+                #{FOLDER}/templates \
+                --config=#{FOLDER}/admin.kubeconfig \
+                --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']}"
+      end
 
-    OpenShiftHelper::NodeHelper.new(node).node_servers.reject { |h| h.key?('skip_run') }.each do |nodes|
-      execute "Set Fluentd Labels for node : #{nodes['fqdn']}" do
-        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node #{nodes['fqdn']} ${key}=${value} --overwrite --config=#{FOLDER}/admin.kubeconfig"
+      execute 'Set Fluentd Labels for all nodes' do
+        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node --all ${key}=${value} --overwrite --config=#{FOLDER}/admin.kubeconfig"
         environment(
           'key' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].keys.first.to_s,
           'value' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].values.first.to_s
         )
-        only_if do
-          !Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node --config=#{FOLDER}/admin.kubeconfig | grep #{nodes['fqdn']}").run_command.error?
-        end
       end
-    end
 
-    execute 'Scaling up ES' do
-      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=es --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} scale --replicas=1 \
-              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
-              --config=#{FOLDER}/admin.kubeconfig"
-    end
+      execute 'Scaling up ES' do
+        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=es --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} scale --replicas=1 \
+                --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
+                --config=#{FOLDER}/admin.kubeconfig"
+      end
 
-    execute 'Scaling up Kibana' do
-      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=kibana --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} scale --replicas=#{node['cookbook-openshift3']['openshift_logging_kibana_replica_count']} \
-              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
-              --config=#{FOLDER}/admin.kubeconfig"
-    end
+      execute 'Rollout DCS ES (>=3.7)' do
+        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=es --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} rollout latest \
+                --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
+                --config=#{FOLDER}/admin.kubeconfig"
+        only_if { ose_major_version.split('.')[1].to_i >= 7 }
+      end
 
-    execute 'Scaling up Curator' do
-      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=curator --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} scale --replicas=1 \
-              --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
-              --config=#{FOLDER}/admin.kubeconfig"
+      execute 'Scaling up Kibana' do
+        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=kibana --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} scale --replicas=#{node['cookbook-openshift3']['openshift_logging_kibana_replica_count']} \
+                --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
+                --config=#{FOLDER}/admin.kubeconfig"
+      end
+
+      execute 'Scaling up Curator' do
+        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=curator --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} scale --replicas=1 \
+                --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
+                --config=#{FOLDER}/admin.kubeconfig"
+      end
+
+      file node['cookbook-openshift3']['openshift_hosted_logging_flag'] do
+        action :create_if_missing
+      end
     end
   end
 end
