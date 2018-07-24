@@ -36,7 +36,7 @@ yum install -y git
 [ -d ~/chef-solo-example/cookbooks/cookbook-openshift3 ] && git --git-dir=/root/chef-solo-example/cookbooks/cookbook-openshift3/.git pull || git clone -q https://github.com/IshentRas/cookbook-openshift3.git
 [ -d ~/chef-solo-example/cookbooks/iptables ] || git clone -q https://github.com/chef-cookbooks/iptables.git
 [ -d ~/chef-solo-example/cookbooks/yum ] || git clone -q https://github.com/chef-cookbooks/yum.git
-[ -d ~/chef-solo-example/cookbooks/selinux_policy ] || git clone -q https://github.com/BackSlasher/chef-selinuxpolicy.git selinux_policy
+[ -d ~/chef-solo-example/cookbooks/selinux_policy ] || git clone -b 'v2.0.0' -q https://github.com/BackSlasher/chef-selinuxpolicy.git selinux_policy
 [ -d ~/chef-solo-example/cookbooks/compat_resource ] || git clone -q https://github.com/chef-cookbooks/compat_resource.git
 [ -d ~/chef-solo-example/cookbooks/docker ] || git clone -q https://github.com/chef-cookbooks/docker.git
 cd ~/chef-solo-example

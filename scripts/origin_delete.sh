@@ -17,7 +17,7 @@ yum -y install -q https://packages.chef.io/files/stable/chef/14.0.190/el/7/chef-
 [ -d ~/chef-solo-example/cookbooks/cookbook-openshift3 ] || git clone -q https://github.com/IshentRas/cookbook-openshift3.git
 [ -d ~/chef-solo-example/cookbooks/iptables ] || git clone -q https://github.com/chef-cookbooks/iptables.git
 [ -d ~/chef-solo-example/cookbooks/yum ] || git clone -q https://github.com/chef-cookbooks/yum.git
-[ -d ~/chef-solo-example/cookbooks/selinux_policy ] || git clone -q https://github.com/BackSlasher/chef-selinuxpolicy.git selinux_policy
+[ -d ~/chef-solo-example/cookbooks/selinux_policy ] || git clone -b 'v2.0.0' -q https://github.com/BackSlasher/chef-selinuxpolicy.git selinux_policy
 [ -d ~/chef-solo-example/cookbooks/compat_resource ] || git clone -q https://github.com/chef-cookbooks/compat_resource.git
 cd ~/chef-solo-example
 ### Create the dedicated environment for Origin deployment
