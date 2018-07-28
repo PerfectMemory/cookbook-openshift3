@@ -15,7 +15,7 @@ unless remove_etcd_servers.empty?
   if is_certificate_server
 
     if is_removing_leader
-			Chef::Log.error('[Remove ETCD - SKIP]. Cannot remove the ETCD leader!!!!. Make sure leader is NOT part of remove_etcd_servers group.')
+      Chef::Log.error('[Remove ETCD - SKIP]. Cannot remove the ETCD leader!!!!. Make sure leader is NOT part of remove_etcd_servers group.')
       return
     end
 
