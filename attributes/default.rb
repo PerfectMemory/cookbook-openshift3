@@ -24,6 +24,7 @@ default['cookbook-openshift3']['lb_servers'] = []
 default['cookbook-openshift3']['certificate_server'] = {}
 default['cookbook-openshift3']['openshift_push_via_dns'] = false
 default['cookbook-openshift3']['openshift_hosted_registry_insecure'] = false
+default['cookbook-openshift3']['openshift_yum_options'] = ''
 
 if node['cookbook-openshift3']['openshift_HA']
   default['cookbook-openshift3']['openshift_common_api_hostname'] = node['cookbook-openshift3']['openshift_cluster_name']

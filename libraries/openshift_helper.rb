@@ -162,6 +162,21 @@ module OpenShiftHelper
       remove_etcd_servers.any? { |remove_server_etcd| remove_server_etcd['fqdn'] == etcd_leader.to_s }
     end
 
+    def check_master_upgrade?(first_etcd, version)
+      if version.to_i < 36
+        ::Mixlib::ShellOut.new("/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.crt --key-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.key --ca-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-ca.crt -C https://#{first_etcd['ipaddress']}:2379 ls /migration/#{version}/#{node['fqdn']}").run_command.error?
+      elsif version.to_i == 36
+        config_options = YAML.load_file("#{node['cookbook-openshift3']['openshift_common_master_dir']}/master/master-config.yaml")
+        if config_options['kubernetesMasterConfig']['apiServerArguments'].key?('storage-backend')
+          ::Mixlib::ShellOut.new("test `ETCDCTL_API=3 /usr/bin/etcdctl --cert #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.crt --key #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.key --cacert #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-ca.crt --endpoints https://#{first_etcd['ipaddress']}:2379 get /migration/#{version}/#{node['fqdn']} --print-value-only` == 'ok'").run_command.error?
+        else
+          ::Mixlib::ShellOut.new("/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.crt --key-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.key --ca-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-ca.crt -C https://#{first_etcd['ipaddress']}:2379 ls /migration/#{version}/#{node['fqdn']}").run_command.error?
+        end
+      else
+        ::Mixlib::ShellOut.new("test `ETCDCTL_API=3 /usr/bin/etcdctl --cert #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.crt --key #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.key --cacert #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-ca.crt --endpoints https://#{first_etcd['ipaddress']}:2379 get /migration/#{version}/#{node['fqdn']} --print-value-only` == 'ok'").run_command.error?
+      end
+    end
+
     protected
 
     attr_reader :node

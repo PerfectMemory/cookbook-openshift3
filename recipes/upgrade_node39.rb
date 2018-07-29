@@ -33,7 +33,7 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
     end
 
     %w(excluder docker-excluder).each do |pkg|
-      execute "Disable #{node['cookbook-openshift3']['openshift_service_type']}-#{pkg}" do
+      execute "Disable #{node['cookbook-openshift3']['openshift_service_type']}-#{pkg} for Nodes" do
         command "#{node['cookbook-openshift3']['openshift_service_type']}-#{pkg} enable"
       end
     end
@@ -46,6 +46,11 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
     log 'Node services' do
       level :info
       notifies :restart, 'service[openvswitch]', :immediately
+      not_if { ::File.file?("/usr/local/share/info/.upgrade-#{node['cookbook-openshift3']['control_upgrade_version']}") }
+    end
+
+    file "/usr/local/share/info/.upgrade-#{node['cookbook-openshift3']['control_upgrade_version']}" do
+      action :create_if_missing
     end
 
     log 'Upgrade for NODE [COMPLETED]' do
