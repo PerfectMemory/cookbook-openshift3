@@ -40,7 +40,6 @@ recipe 'cookbook-openshift3::master_cluster_ca', 'Configure CA cluster certifica
 recipe 'cookbook-openshift3::master_cluster_certificates', 'Configure Master/Node certificates'
 recipe 'cookbook-openshift3::master_cluster', 'Configure HA cluster master (Only Native method)'
 recipe 'cookbook-openshift3::master_config_post', 'Configure Post actions for master server'
-recipe 'cookbook-openshift3::master_packages', 'Install/Configure Master packages'
 recipe 'cookbook-openshift3::master', 'Configure basic master logic'
 recipe 'cookbook-openshift3::master_standalone', 'Configure standalone master logic (<= 3.6)'
 recipe 'cookbook-openshift3::node', 'Configure node server'

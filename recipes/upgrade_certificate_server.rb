@@ -33,7 +33,7 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
   end
 
   include_recipe 'cookbook-openshift3::packages'
-  include_recipe 'cookbook-openshift3::master_packages'
+  openshift_master_pkg 'Upgrade OpenShift Master Packages for Certificate Server'
   include_recipe 'cookbook-openshift3::etcd_packages'
   include_recipe 'cookbook-openshift3::excluder'
 

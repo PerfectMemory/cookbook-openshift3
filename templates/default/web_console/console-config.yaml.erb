@@ -1,0 +1,33 @@
+apiVersion: webconsole.config.openshift.io/v1
+kind: WebConsoleConfiguration
+clusterInfo:
+  consolePublicURL: <%= node['cookbook-openshift3']['openshift_master_console_url'] %>/
+  loggingPublicURL: <%= node['cookbook-openshift3']['openshift_web_console_logging_public_url'] %>
+  logoutPublicURL: <%= node['cookbook-openshift3']['openshift_web_console_logout_url'] %>
+  masterPublicURL: <%= node['cookbook-openshift3']['openshift_master_public_api_url'] %>
+  metricsPublicURL: <%= node['cookbook-openshift3']['openshift_web_console_metrics_public_url'] %>
+extensions:
+  scriptURLs: 
+<% node['cookbook-openshift3']['openshift_web_console_extension_script_urls'].each do |url| %>
+    - <%= url %>
+<%- end -%>
+  stylesheetURLs: 
+<% node['cookbook-openshift3']['openshift_web_console_extension_stylesheet_urls'].each do |url| %>
+    - <%= url %>
+<%- end -%>    
+  properties:
+<% node['cookbook-openshift3']['openshift_web_console_properties'].each_pair do |k,v| %>
+    <%= k %>: <%= v %> 
+<%- end -%>
+features:
+  inactivityTimeoutMinutes: <%= node['cookbook-openshift3']['openshift_web_console_inactivity_timeout_minutes'] %>
+  clusterResourceOverridesEnabled: <%= node['cookbook-openshift3']['openshift_web_console_cluster_resource_overrides_enabled'] %>
+servingInfo:
+  bindAddress: 0.0.0.0:8443
+  bindNetwork: tcp4
+  certFile: /var/serving-cert/tls.crt
+  clientCA: ""
+  keyFile: /var/serving-cert/tls.key
+  maxRequestsInFlight: 0
+  namedCertificates: null
+  requestTimeoutSeconds: 0

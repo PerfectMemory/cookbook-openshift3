@@ -4,9 +4,8 @@
 #
 # Copyright (c) 2015 The Authors, All Rights Reserved.
 
+originrepos = [{ 'name' => 'centos-openshift-origin13', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin13/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin14', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin14/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin15', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin15/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin36', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin36/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin37', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin37/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin39', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin39/', 'gpgcheck' => false }]
 server_info = OpenShiftHelper::NodeHelper.new(node)
-
-originrepos = [{ 'name' => 'centos-openshift-origin13', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin13/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin14', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin14/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin15', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin15/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin36', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin36/', 'gpgcheck' => false }, { 'name' => 'centos-openshift-origin37', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin37/', 'gpgcheck' => false }]
 
 default['cookbook-openshift3']['docker_signature_verification'] = 'false'
 default['cookbook-openshift3']['docker_signature_args'] = server_info.getdockerversion ? " --signature-verification=#{node['cookbook-openshift3']['docker_signature_verification']}" : ''
@@ -25,6 +24,7 @@ default['cookbook-openshift3']['lb_servers'] = []
 default['cookbook-openshift3']['certificate_server'] = {}
 default['cookbook-openshift3']['openshift_push_via_dns'] = false
 default['cookbook-openshift3']['openshift_hosted_registry_insecure'] = false
+default['cookbook-openshift3']['openshift_yum_options'] = ''
 
 if node['cookbook-openshift3']['openshift_HA']
   default['cookbook-openshift3']['openshift_common_api_hostname'] = node['cookbook-openshift3']['openshift_cluster_name']
@@ -43,8 +43,8 @@ end
 default['cookbook-openshift3']['ose_version'] = nil
 default['cookbook-openshift3']['persistent_storage'] = []
 default['cookbook-openshift3']['openshift_deployment_type'] = 'enterprise'
-default['cookbook-openshift3']['ose_major_version'] = '3.7'
-default['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.7' : 'v3.7.2'
+default['cookbook-openshift3']['ose_major_version'] = '3.9'
+default['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.9' : 'v3.9.0'
 default['cookbook-openshift3']['upgrade'] = false
 default['cookbook-openshift3']['deploy_containerized'] = false
 default['cookbook-openshift3']['deploy_example'] = false
@@ -91,7 +91,7 @@ default['cookbook-openshift3']['openshift_master_mcs_allocator_range'] = 's0:/2'
 default['cookbook-openshift3']['openshift_master_mcs_labels_per_project'] = 5
 default['cookbook-openshift3']['openshift_master_uid_allocator_range'] = '1000000000-1999999999/10000'
 default['cookbook-openshift3']['openshift_common_first_svc_ip'] = node['cookbook-openshift3']['openshift_common_portal_net'].split('/')[0].gsub(/\.0$/, '.1')
-default['cookbook-openshift3']['openshift_common_default_nodeSelector'] = 'region=user'
+default['cookbook-openshift3']['openshift_common_default_nodeSelector'] = node['cookbook-openshift3']['ose_major_version'].to_f >= 3.9 ? 'node-role.kubernetes.io/compute=true' : 'region=user'
 default['cookbook-openshift3']['openshift_common_examples_base'] = '/usr/share/openshift/examples'
 default['cookbook-openshift3']['openshift_common_hosted_base'] = node['cookbook-openshift3']['deploy_containerized'] == true ? '/etc/origin/hosted' : '/usr/share/openshift/hosted'
 default['cookbook-openshift3']['openshift_hosted_type'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'enterprise' : 'origin'
@@ -146,6 +146,7 @@ default['cookbook-openshift3']['openshift_master_deserialization_cache_size'] = 
 default['cookbook-openshift3']['openshift_master_pod_eviction_timeout'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_message'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_template'] = ''
+default['cookbook-openshift3']['openshift_master_logout_url'] = nil
 default['cookbook-openshift3']['openshift_master_router_subdomain'] = 'cloudapps.domain.local'
 default['cookbook-openshift3']['openshift_master_sdn_cluster_network_cidr'] = '10.128.0.0/14'
 default['cookbook-openshift3']['openshift_master_sdn_host_subnet_length'] = '9'

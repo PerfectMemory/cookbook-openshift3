@@ -7,6 +7,7 @@
 server_info = OpenShiftHelper::NodeHelper.new(node)
 master_servers = server_info.master_servers
 node_servers = server_info.node_servers
+ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
 
 service_accounts = node['cookbook-openshift3']['openshift_common_service_accounts_additional'].any? ? node['cookbook-openshift3']['openshift_common_service_accounts'] + node['cookbook-openshift3']['openshift_common_service_accounts_additional'] : node['cookbook-openshift3']['openshift_common_service_accounts']
 
@@ -144,6 +145,36 @@ node_servers.reject { |h| h.key?('skip_run') }.each do |nodes|
         !Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node | grep #{nodes['fqdn']}").run_command.error?
     end
   end
+end
+
+if ose_major_version.split('.')[1].to_i >= 9
+  master_servers.each do |master_server|
+    execute "Set \"master\" label for master : #{master_server['fqdn']}" do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node #{master_server['fqdn']} ${labels} --overwrite --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      environment(
+        'labels' => 'node-role.kubernetes.io/master=true'
+      )
+      cwd node['cookbook-openshift3']['openshift_master_config_dir']
+      not_if do
+        Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node | grep #{master_server['fqdn']}").run_command.error?
+      end
+    end
+  end
+
+  node_servers.each do |node_server|
+    execute "Set \"compute\" label for node : #{node_server['fqdn']}" do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node #{node_server['fqdn']} ${labels} --overwrite --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      environment(
+        'labels' => 'node-role.kubernetes.io/compute=true'
+      )
+      cwd node['cookbook-openshift3']['openshift_master_config_dir']
+      not_if do
+        Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node | grep #{node_server['fqdn']}").run_command.error?
+      end
+    end
+  end
+
+  include_recipe 'cookbook-openshift3::web_console' if ose_major_version.split('.')[1].to_i >= 9
 end
 
 openshift_deploy_router 'Deploy Router' do
