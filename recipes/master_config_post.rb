@@ -7,6 +7,7 @@
 server_info = OpenShiftHelper::NodeHelper.new(node)
 master_servers = server_info.master_servers
 node_servers = server_info.node_servers
+ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
 
 service_accounts = node['cookbook-openshift3']['openshift_common_service_accounts_additional'].any? ? node['cookbook-openshift3']['openshift_common_service_accounts'] + node['cookbook-openshift3']['openshift_common_service_accounts_additional'] : node['cookbook-openshift3']['openshift_common_service_accounts']
 
@@ -145,6 +146,8 @@ node_servers.reject { |h| h.key?('skip_run') }.each do |nodes|
     end
   end
 end
+
+include_recipe 'cookbook-openshift3::web_console' if ose_major_version.split('.')[1].to_i >= 9
 
 openshift_deploy_router 'Deploy Router' do
   deployer_options node['cookbook-openshift3']['openshift_hosted_router_options']

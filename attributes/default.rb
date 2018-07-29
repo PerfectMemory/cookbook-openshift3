@@ -44,7 +44,7 @@ default['cookbook-openshift3']['ose_version'] = nil
 default['cookbook-openshift3']['persistent_storage'] = []
 default['cookbook-openshift3']['openshift_deployment_type'] = 'enterprise'
 default['cookbook-openshift3']['ose_major_version'] = '3.9'
-default['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.7' : 'v3.7.2'
+default['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.9' : 'v3.9.0'
 default['cookbook-openshift3']['upgrade'] = false
 default['cookbook-openshift3']['deploy_containerized'] = false
 default['cookbook-openshift3']['deploy_example'] = false
@@ -146,6 +146,7 @@ default['cookbook-openshift3']['openshift_master_deserialization_cache_size'] = 
 default['cookbook-openshift3']['openshift_master_pod_eviction_timeout'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_message'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_template'] = ''
+default['cookbook-openshift3']['openshift_master_logout_url'] = nil
 default['cookbook-openshift3']['openshift_master_router_subdomain'] = 'cloudapps.domain.local'
 default['cookbook-openshift3']['openshift_master_sdn_cluster_network_cidr'] = '10.128.0.0/14'
 default['cookbook-openshift3']['openshift_master_sdn_host_subnet_length'] = '9'
