@@ -10,20 +10,20 @@ if node['cookbook-openshift3']['control_upgrade']
     case node['cookbook-openshift3']['control_upgrade_version']
     when '15'
       default['cookbook-openshift3']['upgrade_ose_major_version'] = '3.5'
-      default['cookbook-openshift3']['upgrade_ose_version'] = '3.5.5.31.48-1.git.0.245c039.el7'
-      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.5.5.31.48'
+      default['cookbook-openshift3']['upgrade_ose_version'] = '3.5.5.31.66-1.git.0.b27a71b.el7'
+      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.5.5.31.66'
     when '36'
       default['cookbook-openshift3']['upgrade_ose_major_version'] = '3.6'
-      default['cookbook-openshift3']['upgrade_ose_version'] = '3.6.173.0.96-1.git.0.8f6ff22.el7'
-      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.6.173.0.96'
+      default['cookbook-openshift3']['upgrade_ose_version'] = '3.6.173.0.126-1.git.0.1dd050d.el7'
+      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.6.173.0.126'
     when '37'
       default['cookbook-openshift3']['upgrade_ose_major_version'] = '3.7'
-      default['cookbook-openshift3']['upgrade_ose_version'] = '3.7.23-1.git.0.8edc154.el7'
-      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.7.23'
+      default['cookbook-openshift3']['upgrade_ose_version'] = '3.7.57-1.git.0.c61c7cf.el7'
+      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.7.57'
     when '39'
       default['cookbook-openshift3']['upgrade_ose_major_version'] = '3.9'
-      default['cookbook-openshift3']['upgrade_ose_version'] = '3.9.0-1.el7.git.0.ba7faec'
-      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.9.0'
+      default['cookbook-openshift3']['upgrade_ose_version'] = '3.9.33-1.git.0.c35d02e.el7'
+      default['cookbook-openshift3']['upgrade_openshift_docker_image_version'] = 'v3.9.33'
     end
   else
     case node['cookbook-openshift3']['control_upgrade_version']
