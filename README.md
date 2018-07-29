@@ -13,9 +13,9 @@ Requirements
 
 ## Openshift Version ##
 
-* Support OSE version from 3.3+
-* Support Origin version from 1.3+
-* Default the installation to 3.7
+* Support OSE version from 3.4+
+* Support Origin version from 1.4+
+* Default the installation to 3.9
 
 **Highly recommended**: 
 
@@ -72,6 +72,8 @@ In the following example, DNSMASQ will only be deployed on mynodeoverride.domain
 
 [x] 3.6 to 3.7
 
+[x] 3.7 to 3.9 (Need to add repository for 3.8 as well (Double upgrades)
+
 ### Control Upgrade
 
 Control upgrade requires variables to be set before running.
@@ -83,7 +85,7 @@ Variables:
 | NAME | PURPOSE | Default value | Mandatory |
 | ---------------- | ------------------------------- | ------------------ | ---------- |
 | control_upgrade | Execute an upgrade     | `false`    | `YES` |
-| control_upgrade_version | Target version (13,14,15,36,37)        |`""` |`YES`|
+| control_upgrade_version | Target version (13,14,15,36,37,39)        |`""` |`YES`|
 | control_upgrade_flag | Location of the control upgrade flag | `"/to_be_replaced"`  | `YES` |
 | upgrade_repos | Target YUM repo | `""` | `NO` |
 
@@ -91,12 +93,17 @@ Variables:
   "override_attributes": {
     "cookbook-openshift3": {
       "control_upgrade": true,
-      "control_upgrade_version": "37",
+      "control_upgrade_version": "39",
       "control_upgrade_flag": "/tmp/ready",
       "upgrade_repos": [
         {
-          "name": "centos-openshift-origin37",
-          "baseurl": "http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin37/",
+          "name": "centos-openshift-origin38",
+          "baseurl": "http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin38/",
+          "gpgcheck": false
+        },
+        {
+          "name": "centos-openshift-origin39",
+          "baseurl": "http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin39/",
           "gpgcheck": false
         }
       ]
@@ -109,9 +116,9 @@ Variables:
 Test Matrix
 ===========
 
-| Platform   | OSE 3.7.0 | OSE 3.6.1 | OSE 1.5.1 | OSE 1.4.1 | OSE 1.3.3 | OSE 1.2.2 |
-| --------   | --------- | --------- | --------- | --------- | --------- | --------- |
-| centos 7.4 | PASS      | PASS      | PASS      | PASS      | PASS      | Not supported |
+| Platform   | OSE 3.9.0 | OSE 3.7.0 | OSE 3.6.1 | OSE 1.5.1 | OSE 1.4.1 | OSE 1.3.3 | OSE 1.2.2 |
+| --------   | --------- | --------- | --------- | --------- | --------- | --------- | --------- |
+| centos 7.4 | PREVIEW   | PASS      | PASS      | PASS      | PASS      | Not supported      | Not supported |
 
 Override Attributes
 ===================
