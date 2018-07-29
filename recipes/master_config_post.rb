@@ -147,7 +147,35 @@ node_servers.reject { |h| h.key?('skip_run') }.each do |nodes|
   end
 end
 
-include_recipe 'cookbook-openshift3::web_console' if ose_major_version.split('.')[1].to_i >= 9
+if ose_major_version.split('.')[1].to_i >= 9
+  master_servers.each do |master_server|
+    execute "Set \"master\" label for master : #{master_server['fqdn']}" do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node #{master_server['fqdn']} ${labels} --overwrite --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      environment(
+        'labels' => 'node-role.kubernetes.io/master=true'
+      )
+      cwd node['cookbook-openshift3']['openshift_master_config_dir']
+      not_if do
+        Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node | grep #{master_server['fqdn']}").run_command.error?
+      end
+    end
+  end
+
+  node_servers.each do |node_server|
+    execute "Set \"compute\" label for node : #{node_server['fqdn']}" do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node #{node_server['fqdn']} ${labels} --overwrite --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      environment(
+        'labels' => 'node-role.kubernetes.io/compute=true'
+      )
+      cwd node['cookbook-openshift3']['openshift_master_config_dir']
+      not_if do
+        Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node | grep #{node_server['fqdn']}").run_command.error?
+      end
+    end
+  end
+
+  include_recipe 'cookbook-openshift3::web_console' if ose_major_version.split('.')[1].to_i >= 9
+end
 
 openshift_deploy_router 'Deploy Router' do
   deployer_options node['cookbook-openshift3']['openshift_hosted_router_options']
