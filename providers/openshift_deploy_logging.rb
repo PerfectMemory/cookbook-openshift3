@@ -139,6 +139,7 @@ action :delete do
       command "#{node['cookbook-openshift3']['openshift_common_client_binary']} $ACTION rolebinding logging-elasticsearch-view-role \
               --config=#{FOLDER}/admin.kubeconfig \
               --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
+      environment 'ACTION' => 'delete'
     end
 
     execute 'Delete logging configmaps' do
