@@ -192,6 +192,19 @@ openshift_deploy_registry 'Deploy Registry' do
   end
 end
 
+if ose_major_version.split('.')[1].to_i >= 6 && ::File.exist?(node['cookbook-openshift3']['adhoc_redeploy_registry_certificates_flag'])
+  openshift_deploy_registry 'Redeploy Registry certificate' do
+    action :redeploy_certificate
+    only_if do
+      node['cookbook-openshift3']['openshift_hosted_manage_registry']
+    end
+  end
+
+  file node['cookbook-openshift3']['adhoc_redeploy_registry_certificates_flag'] do
+    action :delete
+  end
+end
+
 openshift_deploy_metrics 'Remove Cluster Metrics' do
   action :delete
   only_if do

@@ -15,3 +15,5 @@ default['cookbook-openshift3']['redeploy_cluster_hosted_certserver_control_flag'
 default['cookbook-openshift3']['adhoc_reset_control_flag'] = '/to_be_reset_node'
 
 default['cookbook-openshift3']['adhoc_turn_off_openshift3_cookbook'] = '/to_be_replaced_turn_off_openshift3_cookbook'
+
+default['cookbook-openshift3']['adhoc_redeploy_registry_certificates_flag'] = '/to_be_replaced_registry_certificates'

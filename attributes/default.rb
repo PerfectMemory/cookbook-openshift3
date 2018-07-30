@@ -22,7 +22,7 @@ default['cookbook-openshift3']['remove_etcd_servers'] = []
 default['cookbook-openshift3']['node_servers'] = []
 default['cookbook-openshift3']['lb_servers'] = []
 default['cookbook-openshift3']['certificate_server'] = {}
-default['cookbook-openshift3']['openshift_push_via_dns'] = false
+default['cookbook-openshift3']['openshift_push_via_dns'] = node['cookbook-openshift3']['ose_major_version'].to_f >= 3.6 ? true : false
 default['cookbook-openshift3']['openshift_hosted_registry_insecure'] = false
 default['cookbook-openshift3']['openshift_yum_options'] = ''
 

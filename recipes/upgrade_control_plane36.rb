@@ -108,6 +108,21 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
       level :info
     end
 
+    log 'Update the registry certificate for push-dns [STARTED]' do
+      level :info
+    end
+
+    openshift_deploy_registry 'Redeploy Registry certificate' do
+      action :redeploy_certificate
+      only_if do
+        node['cookbook-openshift3']['openshift_hosted_manage_registry']
+      end
+    end
+
+    log 'Update the registry certificate for push-dns [COMPLETED]' do
+      level :info
+    end
+
     include_recipe 'cookbook-openshift3::upgrade_managed_hosted'
   end
   include_recipe 'cookbook-openshift3::upgrade_node36' if is_node_server
