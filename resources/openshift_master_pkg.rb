@@ -20,7 +20,7 @@ action :install do
     bash 'Add CLI to master(s)' do
       code <<-BASH
         docker create --name temp-cli ${DOCKER_IMAGE}:${DOCKER_TAG}
-        docker cp temp-cli:/usr/bin/openshift /usr/local/bin/openshift
+        docker cp temp-cli:/usr/bin/oc /usr/local/bin/openshift
         docker rm temp-cli
         BASH
       environment(
