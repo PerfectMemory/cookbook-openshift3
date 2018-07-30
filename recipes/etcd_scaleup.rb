@@ -5,12 +5,12 @@
 # Copyright (c) 2015 The Authors, All Rights Reserved.
 
 server_info = OpenShiftHelper::NodeHelper.new(node)
-first_etcd = server_info.first_etcd
 etcd_servers = server_info.etcd_servers
 new_etcd_servers = server_info.new_etcd_servers
 certificate_server = server_info.certificate_server
 is_new_etcd_server = server_info.on_new_etcd_server?
 is_certificate_server = server_info.on_certificate_server?
+etcds = etcd_servers.map { |srv| "#{srv['fqdn']}=https://#{srv['ipaddress']}:2379" }.join(',')
 
 unless new_etcd_servers.empty?
   if is_certificate_server
@@ -24,13 +24,13 @@ unless new_etcd_servers.empty?
 
     new_etcd_servers.each do |etcd|
       execute "Add #{etcd['fqdn']} to the cluster" do
-        command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 member add #{etcd['fqdn']} https://#{etcd['ipaddress']}:2380 | grep ^ETCD | tr --delete '\"' | tee #{node['cookbook-openshift3']['etcd_generated_scaleup_dir']}/etcd-#{etcd['fqdn']}"
+        command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C #{etcds} member add #{etcd['fqdn']} https://#{etcd['ipaddress']}:2380 | grep ^ETCD | tr --delete '\"' | tee #{node['cookbook-openshift3']['etcd_generated_scaleup_dir']}/etcd-#{etcd['fqdn']}"
         creates "#{node['cookbook-openshift3']['etcd_generated_scaleup_dir']}/etcd-#{etcd['fqdn']}"
         notifies :run, "execute[Check #{etcd['fqdn']} has successfully registered]", :immediately
       end
 
       execute "Check #{etcd['fqdn']} has successfully registered" do
-        command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 cluster-health | grep -w 'got healthy result from https://#{etcd['ipaddress']}:2379'"
+        command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C #{etcds} cluster-health | grep -w 'got healthy result from https://#{etcd['ipaddress']}:2379'"
         retries 60
         retry_delay 5
         action :nothing

@@ -157,9 +157,8 @@ module OpenShiftHelper
       end
     end
 
-    def removing_etcd_leader?
-      etcd_leader = Mixlib::ShellOut.new("/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 member list | awk '/isLeader=true/ {print substr($2,6,100)}'").run_command.stdout.strip
-      remove_etcd_servers.any? { |remove_server_etcd| remove_server_etcd['fqdn'] == etcd_leader.to_s }
+    def removing_etcd?
+      etcd_servers.any? { |item| remove_etcd_servers.include? item }
     end
 
     def check_master_upgrade?(first_etcd, version)
