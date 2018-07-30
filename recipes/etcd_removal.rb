@@ -5,6 +5,7 @@
 # Copyright (c) 2015 The Authors, All Rights Reserved.
 
 server_info = OpenShiftHelper::NodeHelper.new(node)
+first_etcd = server_info.first_etcd
 remove_etcd_servers = server_info.remove_etcd_servers
 is_remove_etcd_server = server_info.on_remove_etcd_server?
 is_certificate_server = server_info.on_certificate_server?
