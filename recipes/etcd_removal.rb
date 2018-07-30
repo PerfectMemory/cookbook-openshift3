@@ -10,7 +10,7 @@ remove_etcd_servers = server_info.remove_etcd_servers
 is_remove_etcd_server = server_info.on_remove_etcd_server?
 is_certificate_server = server_info.on_certificate_server?
 is_removing_etcd = server_info.removing_etcd?
-etcds = etcd_servers.map { |srv| "#{srv['fqdn']}=https://#{srv['ipaddress']}:2379" }.join(',')
+etcds = etcd_servers.map { |srv| "https://#{srv['ipaddress']}:2379" }.join(',')
 
 unless remove_etcd_servers.empty?
   if is_certificate_server

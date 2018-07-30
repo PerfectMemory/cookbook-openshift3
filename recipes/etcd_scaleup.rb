@@ -11,7 +11,7 @@ new_etcd_servers = server_info.new_etcd_servers
 certificate_server = server_info.certificate_server
 is_new_etcd_server = server_info.on_new_etcd_server?
 is_certificate_server = server_info.on_certificate_server?
-etcds = etcd_servers.map { |srv| "#{srv['fqdn']}=https://#{srv['ipaddress']}:2379" }.join(',')
+etcds = etcd_servers.map { |srv| "https://#{srv['ipaddress']}:2379" }.join(',')
 
 unless new_etcd_servers.empty?
   if is_certificate_server
