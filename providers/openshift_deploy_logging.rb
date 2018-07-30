@@ -143,7 +143,7 @@ action :delete do
     end
 
     execute 'Delete logging configmaps' do
-      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} delete configmap logging-elasticsearch logging-curator logging-fluentd \
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} $ACTION configmap logging-elasticsearch logging-curator logging-fluentd \
               --config=#{FOLDER}/admin.kubeconfig \
               --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} --ignore-not-found=true"
       environment 'ACTION' => 'delete'
