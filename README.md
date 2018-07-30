@@ -844,7 +844,7 @@ Here is a simple example of a addition/removal for the ETCD cluster:
 
 5. Part4: Remove old members (etcd1, etcd2 and etcd3)
 
-[![Simple Example](https://asciinema.org/a/193880.png)](https://asciinema.org/a/193880)
+[![Simple Example](https://asciinema.org/a/194110.png)](https://asciinema.org/a/194110)
 
 * EXCLUDE NODES FROM SCHEDULING AND LABELLING("skip_run" must be defined and the node will be excluded when enforcing labels and schedulability")
   
