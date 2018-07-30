@@ -14,10 +14,10 @@ is_removing_leader = server_info.removing_etcd_leader?
 unless remove_etcd_servers.empty?
   if is_certificate_server
 
-    if is_removing_leader
-      Chef::Log.error('[Remove ETCD - SKIP]. Cannot remove the ETCD leader!!!!. Make sure leader is NOT part of remove_etcd_servers group.')
-      return
-    end
+    # if is_removing_leader
+    #   Chef::Log.error('[Remove ETCD - SKIP]. Cannot remove the ETCD leader!!!!. Make sure leader is NOT part of remove_etcd_servers group.')
+    #   return
+    # end
 
     directory node['cookbook-openshift3']['etcd_generated_remove_dir'] do
       mode '0755'
@@ -32,7 +32,7 @@ unless remove_etcd_servers.empty?
         action :nothing
       end
 
-      execute "Add #{etcd['fqdn']} to the cluster" do
+      execute "Remove #{etcd['fqdn']} to the cluster" do
         command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 member remove $(/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 member list | awk '/name=#{etcd['fqdn']}/ {print substr($1,0,length($1)-1)}')"
         notifies :run, "execute[Check #{etcd['fqdn']} has successfully been removed]", :immediately
       end
@@ -41,8 +41,16 @@ unless remove_etcd_servers.empty?
         command "[[ $(/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 member list | grep -c #{etcd['fqdn']}) -eq 0 ]]"
         retries 5
         retry_delay 5
-        notifies :create, "file[#{node['cookbook-openshift3']['etcd_generated_remove_dir']}/.removed-#{etcd['fqdn']}]", :immediately
+        notifies :run, "execute[Check #{etcd['fqdn']} left the cluster in Healthy condition before proceeding]", :immediately
         action :nothing
+      end
+
+      execute "Check #{etcd['fqdn']} left the cluster in Healthy condition before proceeding" do
+        command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 cluster-health | grep -w 'cluster is healthy'"
+        retries 5
+        retry_delay 5
+        action :nothing
+        notifies :create, "file[#{node['cookbook-openshift3']['etcd_generated_remove_dir']}/.removed-#{etcd['fqdn']}]", :immediately
       end
     end
   end
