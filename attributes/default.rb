@@ -113,6 +113,7 @@ default['cookbook-openshift3']['openshift_docker_secure'] = false
 default['cookbook-openshift3']['openshift_docker_insecure_registry_arg'] = []
 default['cookbook-openshift3']['openshift_docker_add_registry_arg'] = []
 default['cookbook-openshift3']['openshift_docker_block_registry_arg'] = []
+default['cookbook-openshift3']['openshift_docker_network_options'] = ''
 default['cookbook-openshift3']['openshift_docker_insecure_registries'] = node['cookbook-openshift3']['openshift_hosted_registry_insecure'] ? [node['cookbook-openshift3']['openshift_common_portal_net']] + node['cookbook-openshift3']['openshift_docker_insecure_registry_arg'] : node['cookbook-openshift3']['openshift_docker_insecure_registry_arg']
 default['cookbook-openshift3']['openshift_docker_master_image'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'openshift3/ose' : 'openshift/origin'
 default['cookbook-openshift3']['openshift_docker_hosted_registry_image'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'openshift3/ose-\${component}:\${version}' : 'openshift/origin-\${component}:\${version}'

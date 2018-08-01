@@ -86,6 +86,13 @@ directory node['cookbook-openshift3']['openshift_data_dir'] do
   only_if { node['cookbook-openshift3']['deploy_containerized'] && (is_master_server || is_node_server) }
 end
 
+directory node['cookbook-openshift3']['openshift_common_base_dir'] do
+  owner 'root'
+  group 'root'
+  mode '0750'
+  only_if { is_master_server || is_node_server }
+end
+
 include_recipe 'cookbook-openshift3::certificate_server' if is_certificate_server
 include_recipe 'cookbook-openshift3::etcd_removal' if is_remove_etcd_server
 include_recipe 'cookbook-openshift3::cloud_provider'
