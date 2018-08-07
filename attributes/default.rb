@@ -184,7 +184,6 @@ default['cookbook-openshift3']['openshift_node_config_dir'] = "#{node['cookbook-
 default['cookbook-openshift3']['openshift_node_config_file'] = "#{node['cookbook-openshift3']['openshift_node_config_dir']}/node-config.yaml"
 default['cookbook-openshift3']['openshift_node_debug_level'] = '2'
 default['cookbook-openshift3']['openshift_node_dnsmasq_log_queries'] = false
-default['cookbook-openshift3']['openshift_node_dnsmasq_cache_size'] = 150
 default['cookbook-openshift3']['openshift_node_dnsmasq_maxcachettl'] = 1
 default['cookbook-openshift3']['openshift_node_dnsmasq_interface'] = false
 default['cookbook-openshift3']['openshift_node_dnsmasq_bind_interface'] = 'eth0'
