@@ -108,9 +108,15 @@ if is_etcd_server || is_new_etcd_server
     end
   end
 
-  execute 'Fix ETCD directory permissions' do
-    command "chmod 755 #{node['cookbook-openshift3']['etcd_conf_dir']}"
-    only_if "[[ $(stat -c %a #{node['cookbook-openshift3']['etcd_conf_dir']}) -ne 755 ]]"
+  # execute 'Fix ETCD directory permissions' do
+  #   command "chmod 755 #{node['cookbook-openshift3']['etcd_conf_dir']}"
+  #   only_if "[[ $(stat -c %a #{node['cookbook-openshift3']['etcd_conf_dir']}) -ne 755 ]]"
+  # end
+
+  directory node['cookbook-openshift3']['etcd_conf_dir'] do
+    owner 'etcd'
+    group 'etcd'
+    mode '0700'
   end
 
   template "#{node['cookbook-openshift3']['etcd_conf_dir']}/etcd.conf" do

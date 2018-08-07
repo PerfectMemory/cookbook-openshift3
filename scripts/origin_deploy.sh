@@ -55,6 +55,7 @@ cat << BASH > environments/origin.json
   },
   "override_attributes": {
     "cookbook-openshift3": {
+      "openshift_hosted_cluster_metrics": true,
       "openshift_common_sdn_network_plugin_name": "redhat/openshift-ovs-multitenant",
       "openshift_cluster_name": "console.${IP}.nip.io",
       "openshift_HA": true,

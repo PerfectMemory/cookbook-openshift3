@@ -32,12 +32,13 @@ default['cookbook-openshift3']['openshift_metrics_hawkular_user_write_access'] =
 default['cookbook-openshift3']['openshift_metrics_heapster_allowed_users'] = 'system:master-proxy'
 default['cookbook-openshift3']['openshift_metrics_heapster_limits_cpu'] = ''
 default['cookbook-openshift3']['openshift_metrics_heapster_limits_memory'] = '3.75G'
+default['cookbook-openshift3']['openshift_metrics_heapster_concurrency_limit'] = '5'
 default['cookbook-openshift3']['openshift_metrics_heapster_nodeselector'] = %w()
 default['cookbook-openshift3']['openshift_metrics_heapster_requests_cpu'] = ''
 default['cookbook-openshift3']['openshift_metrics_heapster_requests_memory'] = '0.9375G'
 default['cookbook-openshift3']['openshift_metrics_heapster_standalone'] = false
 default['cookbook-openshift3']['openshift_metrics_image_prefix'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'registry.access.redhat.com/openshift3/' : 'docker.io/openshift/origin-'
-default['cookbook-openshift3']['openshift_metrics_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.7' : 'v3.7.1'
+default['cookbook-openshift3']['openshift_metrics_image_version'] = 'v3.9'
 default['cookbook-openshift3']['openshift_metrics_install_metrics'] = true
 default['cookbook-openshift3']['openshift_metrics_master_url'] = 'https://kubernetes.default.svc'
 default['cookbook-openshift3']['openshift_metrics_node_id'] = 'nodename'
