@@ -80,16 +80,9 @@ if is_master_server && is_first_master
     level :info
   end
 
-  execute 'Reconcile Security Context Constraints (3.9)' do
-    command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} \
-            --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig \
-            policy reconcile-sccs --confirm --additive-only=true"
-  end
-
-  execute 'Migrate storage post policy reconciliation Post upgrade (3.9)' do
-    command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} \
-            --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig \
-            migrate storage --include=* --confirm --server #{node['cookbook-openshift3']['openshift_master_loopback_api_url']}"
+  openshift_upgrade 'Reconcile Cluster Roles & Cluster Role Bindings' do
+    action :reconcile_cluster_roles
+    target_version node['cookbook-openshift3']['upgrade_ose_version']
   end
 
   execute 'Delete key for upgrade all storage (3.9)' do
