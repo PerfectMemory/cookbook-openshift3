@@ -43,7 +43,7 @@ default['cookbook-openshift3']['ose_version'] = nil
 default['cookbook-openshift3']['persistent_storage'] = []
 default['cookbook-openshift3']['openshift_deployment_type'] = 'enterprise'
 default['cookbook-openshift3']['ose_major_version'] = '3.9'
-default['cookbook-openshift3']['openshift_push_via_dns'] = node['cookbook-openshift3']['ose_major_version'].to_f >= 3.6 ? true : false
+default['cookbook-openshift3']['openshift_push_via_dns'] = (node['cookbook-openshift3']['ose_major_version'].to_f >= 3.6)
 default['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.9' : 'v3.9.0'
 default['cookbook-openshift3']['upgrade'] = false
 default['cookbook-openshift3']['deploy_containerized'] = false
