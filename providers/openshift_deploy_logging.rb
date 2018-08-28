@@ -575,7 +575,7 @@ action :create do
         'key' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].keys.first.to_s,
         'value' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].values.first.to_s
       )
-      only_if "[[ $(#{node['cookbook-openshift3']['openshift_common_client_binary']} get node -l ${key}!=${value} --no-headers -config=#{FOLDER}/admin.kubeconfig | wc -l) > 0 ]]"
+      only_if "[[ $(#{node['cookbook-openshift3']['openshift_common_client_binary']} get node -l ${key}!=${value} --no-headers --config=#{FOLDER}/admin.kubeconfig | wc -l) > 0 ]]"
     end
   end
 end
