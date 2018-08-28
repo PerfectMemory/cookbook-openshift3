@@ -539,14 +539,6 @@ action :create do
                 --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']}"
       end
 
-      execute 'Set Fluentd Labels for all nodes' do
-        command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node --all ${key}=${value} --overwrite --config=#{FOLDER}/admin.kubeconfig"
-        environment(
-          'key' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].keys.first.to_s,
-          'value' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].values.first.to_s
-        )
-      end
-
       execute 'Scaling up ES' do
         command "#{node['cookbook-openshift3']['openshift_common_client_binary']} get dc --selector=component=es --config=#{FOLDER}/admin.kubeconfig --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} -o name | xargs #{node['cookbook-openshift3']['openshift_common_client_binary']} scale --replicas=1 \
                 --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']} \
@@ -575,6 +567,15 @@ action :create do
       file node['cookbook-openshift3']['openshift_hosted_logging_flag'] do
         action :create_if_missing
       end
+    end
+
+    execute 'Set Fluentd Labels for all nodes' do
+      command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node --all ${key}=${value} --overwrite --config=#{FOLDER}/admin.kubeconfig"
+      environment(
+        'key' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].keys.first.to_s,
+        'value' => node['cookbook-openshift3']['openshift_logging_fluentd_nodeselector'].values.first.to_s
+      )
+      only_if "[[ $(#{node['cookbook-openshift3']['openshift_common_client_binary']} get node -l ${key}!=${value} --no-headers -config=#{FOLDER}/admin.kubeconfig | wc -l) > 0 ]]"
     end
   end
 end
