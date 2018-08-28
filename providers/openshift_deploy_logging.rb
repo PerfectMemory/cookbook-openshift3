@@ -510,33 +510,33 @@ action :create do
       )
     end
 
-    execute 'Set rolebinding-reader permissions for ES' do
-      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user rolebinding-reader system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch --config=#{FOLDER}/admin.kubeconfig"
-      not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrole/rolebinding-reader -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch"
-    end
-
-    execute 'Set auth-delegator permissions for ES' do
-      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user system:auth-delegator system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch --config=#{FOLDER}/admin.kubeconfig"
-      not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrole/system:auth-delegator -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch"
-      only_if { ose_major_version.split('.')[1].to_i >= 7 }
-    end
-
-    execute 'Set privileged permissions for fluentd' do
-      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-scc-to-user privileged system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd --config=#{FOLDER}/admin.kubeconfig"
-      not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get scc/privileged -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd"
-    end
-
-    execute 'Set cluster-reader permissions for fluentd' do
-      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user cluster-reader system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd --config=#{FOLDER}/admin.kubeconfig"
-      not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrolebinding/cluster-readers -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd"
-    end
-
     unless ::File.file?(node['cookbook-openshift3']['openshift_hosted_logging_flag'])
       execute 'Applying template files' do
         command "#{node['cookbook-openshift3']['openshift_common_client_binary']} apply -f \
                 #{FOLDER}/templates \
                 --config=#{FOLDER}/admin.kubeconfig \
                 --namespace=#{node['cookbook-openshift3']['openshift_logging_namespace']}"
+      end
+
+      execute 'Set rolebinding-reader permissions for ES' do
+        command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user rolebinding-reader system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch --config=#{FOLDER}/admin.kubeconfig"
+        not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrole/rolebinding-reader -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch"
+      end
+
+      execute 'Set auth-delegator permissions for ES' do
+        command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user system:auth-delegator system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch --config=#{FOLDER}/admin.kubeconfig"
+        not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrole/system:auth-delegator -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-elasticsearch"
+        only_if { ose_major_version.split('.')[1].to_i >= 7 }
+      end
+
+      execute 'Set privileged permissions for fluentd' do
+        command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-scc-to-user privileged system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd --config=#{FOLDER}/admin.kubeconfig"
+        not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get scc/privileged -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd"
+      end
+
+      execute 'Set cluster-reader permissions for fluentd' do
+        command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} policy add-cluster-role-to-user cluster-reader system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd --config=#{FOLDER}/admin.kubeconfig"
+        not_if "#{node['cookbook-openshift3']['openshift_common_client_binary']} get clusterrolebinding/cluster-readers -o yaml --config=#{FOLDER}/admin.kubeconfig | grep system:serviceaccount:#{node['cookbook-openshift3']['openshift_logging_namespace']}:aggregated-logging-fluentd"
       end
 
       execute 'Scaling up ES' do
