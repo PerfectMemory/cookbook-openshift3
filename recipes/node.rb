@@ -25,7 +25,8 @@ if is_node_server
     block do
       server_info.turn_off_swap
     end
-    only_if { ::File.readlines('/etc/fstab').grep(/(^[^#].*swap.*)\n/).any? }
+    not_if { ::File.readlines('/etc/fstab').grep(/(^[^#].*swap.*)\n/).none? }
+    only_if { node['cookbook-openshift3']['openshift_node_disable_swap_on_host'] }
   end
 
   file '/usr/local/etc/.firewall_node_additional.txt' do
