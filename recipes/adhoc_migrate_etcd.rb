@@ -12,6 +12,7 @@ is_first_master = server_info.on_first_master?
 is_first_etcd = server_info.on_first_etcd?
 certificate_server = server_info.certificate_server
 is_certificate_server = server_info.on_certificate_server?
+is_control_plane_server = server_info.on_control_plane_server?
 etcd_servers = server_info.etcd_servers
 
 include_recipe 'cookbook-openshift3::services'
@@ -291,5 +292,11 @@ if is_master_server
 
   log 'ETCD migration [COMPLETED]' do
     level :info
+  end
+end
+
+if is_control_plane_server
+  file node['cookbook-openshift3']['adhoc_migrate_etcd_flag'] do
+    action :delete
   end
 end
