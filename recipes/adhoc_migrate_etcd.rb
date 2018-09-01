@@ -18,6 +18,10 @@ include_recipe 'cookbook-openshift3::services'
 
 if is_etcd_server
   return if ::File.file?("#{node['cookbook-openshift3']['etcd_data_dir']}/.migrated")
+  if ::Dir.glob("#{node['cookbook-openshift3']['etcd_data_dir']}/member/snap/*.snap").empty?
+    Chef::Log.error('Before the migration can proceed the etcd member must write down at least one snapshot under /var/lib/etcd/member/snap directory')
+    return
+  end
 end
 
 if is_first_etcd
@@ -34,6 +38,7 @@ if is_first_etcd
 
   execute 'Starting ETCD Migration' do
     command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_peer_file']} --key-file #{node['cookbook-openshift3']['etcd_peer_key']} --ca-file #{node['cookbook-openshift3']['etcd_ca_cert']} -C https://`hostname`:2379 set /migration/etcd pre"
+    action :nothing
   end
 end
 
@@ -49,7 +54,7 @@ end
 if is_etcd_server
   execute 'Checking flag for migration (ETCD)' do
     command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_peer_file']} --key-file #{node['cookbook-openshift3']['etcd_peer_key']} --ca-file #{node['cookbook-openshift3']['etcd_ca_cert']} -C https://`hostname`:2379 get /migration/etcd | grep -w pre"
-    retries 30
+    retries 60
     retry_delay 2
     notifies :run, 'execute[Generate etcd backup before migration]', :immediately
   end
@@ -75,7 +80,7 @@ end
 
 if is_first_etcd
   execute 'Migrate etcd data' do
-    command "ETCDCTL_API=3 /usr/bin/etcdctl migrate --data-dir=#{node['cookbook-openshift3']['etcd_data_dir']} > #{Chef::Config[:file_cache_path]}/etcd_migration1"
+    command "ETCDCTL_API=3 /usr/bin/etcdctl migrate --data-dir=#{node['cookbook-openshift3']['etcd_data_dir']} &> #{Chef::Config[:file_cache_path]}/etcd_migration1"
   end
 
   execute 'Check the etcd v2 data are correctly migrated' do
@@ -127,6 +132,11 @@ if is_first_etcd
     only_if { etcd_servers.size == 1 }
   end
 
+  execute 'Set ETCD ready' do
+    command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_peer_file']} --key-file #{node['cookbook-openshift3']['etcd_peer_key']} --ca-file #{node['cookbook-openshift3']['etcd_ca_cert']} -C https://`hostname`:2379 set /migration/etcd-cluster ok"
+    only_if { etcd_servers.size > 1 }
+  end
+
   file "#{node['cookbook-openshift3']['etcd_data_dir']}/.migrated" do
     action :create_if_missing
   end
@@ -140,6 +150,12 @@ unless etcd_servers.size == 1
       owner 'apache'
       group 'apache'
       recursive true
+    end
+
+    execute 'Checking flag for migration (Certificate Server)' do
+      command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 get /migration/etcd-cluster | grep -w ok"
+      retries 60
+      retry_delay 5
     end
 
     etcd_servers.reject { |etcdservers| etcdservers['fqdn'] == first_etcd['fqdn'] }.each do |etcd|
