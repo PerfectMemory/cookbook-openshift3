@@ -194,6 +194,7 @@ default['cookbook-openshift3']['openshift_node_kubelet_args_custom'] = {}
 default['cookbook-openshift3']['openshift_node_iptables_sync_period'] = '30s'
 default['cookbook-openshift3']['openshift_node_port_range'] = ''
 default['cookbook-openshift3']['openshift_node_sdn_mtu_sdn'] = '1450'
+default['cookbook-openshift3']['openshift_node_disable_swap_on_host'] = true
 # Deprecated options (Use openshift_node_kubelet_args_custom instead)
 default['cookbook-openshift3']['openshift_node_max_pod'] = ''
 default['cookbook-openshift3']['openshift_node_image_config_latest'] = false
