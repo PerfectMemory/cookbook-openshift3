@@ -154,7 +154,7 @@ unless etcd_servers.size == 1
 
     execute 'Checking flag for migration (Certificate Server)' do
       command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt -C https://#{first_etcd['ipaddress']}:2379 get /migration/etcd-cluster | grep -w ok"
-      retries 60
+      retries 120
       retry_delay 5
     end
 
@@ -190,7 +190,7 @@ unless etcd_servers.size == 1
       source "http://#{certificate_server['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/etcd/migration/etcd-#{node['fqdn']}"
       action :create_if_missing
       notifies :run, 'execute[daemon-reload]', :immediately
-      retries 60
+      retries 120
       retry_delay 5
     end
 
@@ -202,7 +202,7 @@ unless etcd_servers.size == 1
 
     execute 'Check cluster health' do
       command "[[ $(/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_peer_file']} --key-file #{node['cookbook-openshift3']['etcd_peer_key']} --ca-file #{node['cookbook-openshift3']['etcd_ca_cert']} -C https://`hostname`:2379 cluster-health | grep -c 'got healthy') -eq #{etcd_servers.size} ]]"
-      retries 60
+      retries 120
       retry_delay 5
     end
 
@@ -239,8 +239,8 @@ end
 if is_first_master
   execute 'Checking flag for migration (Master)' do
     command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.crt --key-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.key --ca-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-ca.crt -C https://#{first_etcd['ipaddress']}:2379 get /migration/etcd | grep -w ok"
-    retries 60
-    retry_delay 2
+    retries 120
+    retry_delay 5
     notifies :run, 'bash[Add TTLs on the first master]', :immediately
   end
 
@@ -269,8 +269,8 @@ end
 if is_master_server
   execute 'Checking flag for clearing migration (Master)' do
     command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.crt --key-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.key --ca-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-ca.crt -C https://#{first_etcd['ipaddress']}:2379 get /migration/etcd | grep -w final"
-    retries 60
-    retry_delay 2
+    retries 120
+    retry_delay 5
   end
 
   config_options = YAML.load_file("#{node['cookbook-openshift3']['openshift_common_master_dir']}/master/master-config.yaml")
@@ -291,8 +291,5 @@ if is_master_server
 
   log 'ETCD migration [COMPLETED]' do
     level :info
-    action :nothing
-    notifies :start, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-api]", :immediately
-    notifies :start, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-controllers]", :immediately
   end
 end
