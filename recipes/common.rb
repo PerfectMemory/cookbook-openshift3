@@ -65,11 +65,7 @@ package 'deltarpm' do
   retries 3
 end
 
-node['cookbook-openshift3']['core_packages'].each do |pkg|
-  package pkg do
-    retries 3
-  end
-end
+yum_package node['cookbook-openshift3']['core_packages']
 
 package 'httpd' do
   notifies :run, 'ruby_block[Change HTTPD port xfer]', :immediately
