@@ -31,11 +31,11 @@ if [[ $2 =~ ^(up|dhcp4-change|dhcp6-change)$ ]]; then
   NEEDS_RESTART=0
   UPSTREAM_DNS='/etc/dnsmasq.d/origin-upstream-dns.conf'
   # We'll regenerate the dnsmasq origin config in a temp file first
-  UPSTREAM_DNS_TMP=`mktemp`
-  UPSTREAM_DNS_TMP_SORTED=`mktemp`
-  CURRENT_UPSTREAM_DNS_SORTED=`mktemp`
-  NEW_RESOLV_CONF=`mktemp`
-  NEW_NODE_RESOLV_CONF=`mktemp`
+  UPSTREAM_DNS_TMP=$(mktemp)
+  UPSTREAM_DNS_TMP_SORTED=$(mktemp)
+  CURRENT_UPSTREAM_DNS_SORTED=$(mktemp)
+  NEW_RESOLV_CONF=$(mktemp)
+  NEW_NODE_RESOLV_CONF=$(mktemp)
 
 
   ######################################################################
@@ -65,7 +65,7 @@ EOF
     # watermark
     if ! grep -q '99-origin-dns.sh' /etc/resolv.conf; then
       if [[ -z "${IP4_NAMESERVERS}" || "${IP4_NAMESERVERS}" == "${def_route_ip}" ]]; then
-            IP4_NAMESERVERS=`grep '^nameserver[[:blank:]]' /etc/resolv.conf | awk '{ print $2 }'`
+            IP4_NAMESERVERS=$(grep '^nameserver[[:blank:]]' /etc/resolv.conf | awk '{ print $2 }')
       fi
       ######################################################################
       # Write out default nameservers for /etc/dnsmasq.d/origin-upstream-dns.conf
@@ -80,8 +80,8 @@ EOF
       sort $UPSTREAM_DNS_TMP > $UPSTREAM_DNS_TMP_SORTED
       sort $UPSTREAM_DNS > $CURRENT_UPSTREAM_DNS_SORTED
       # Compare to the current config file (sorted)
-      NEW_DNS_SUM=`md5sum ${UPSTREAM_DNS_TMP_SORTED} | awk '{print $1}'`
-      CURRENT_DNS_SUM=`md5sum ${CURRENT_UPSTREAM_DNS_SORTED} | awk '{print $1}'`
+      NEW_DNS_SUM=$(md5sum ${UPSTREAM_DNS_TMP_SORTED} | awk '{print $1}')
+      CURRENT_DNS_SUM=$(md5sum ${CURRENT_UPSTREAM_DNS_SORTED} | awk '{print $1}')
       if [ "${NEW_DNS_SUM}" != "${CURRENT_DNS_SUM}" ]; then
         # DNS has changed, copy the temp file to the proper location (-Z
         # sets default selinux context) and set the restart flag
@@ -89,14 +89,14 @@ EOF
         NEEDS_RESTART=1
       fi
       # compare /etc/origin/node/resolv.conf checksum and replace it if different
-      NEW_NODE_RESOLV_CONF_MD5=`md5sum ${NEW_NODE_RESOLV_CONF}`
-      OLD_NODE_RESOLV_CONF_MD5=`md5sum /etc/origin/node/resolv.conf`
+      NEW_NODE_RESOLV_CONF_MD5=$(md5sum ${NEW_NODE_RESOLV_CONF})
+      OLD_NODE_RESOLV_CONF_MD5=$(md5sum /etc/origin/node/resolv.conf)
       if [ "${NEW_NODE_RESOLV_CONF_MD5}" != "${OLD_NODE_RESOLV_CONF_MD5}" ]; then
         cp -Z $NEW_NODE_RESOLV_CONF /etc/origin/node/resolv.conf
       fi
     fi
 
-    if ! `systemctl -q is-active dnsmasq.service`; then
+    if ! $(systemctl -q is-active dnsmasq.service); then
       NEEDS_RESTART=1
     fi
 
@@ -107,7 +107,7 @@ EOF
 
     # Only if dnsmasq is running properly make it our only nameserver and place
     # a watermark on /etc/resolv.conf
-    if `systemctl -q is-active dnsmasq.service`; then
+    if $(systemctl -q is-active dnsmasq.service); then
       if ! grep -q '99-origin-dns.sh' /etc/resolv.conf; then
           echo "# nameserver updated by /etc/NetworkManager/dispatcher.d/99-origin-dns.sh" >> ${NEW_RESOLV_CONF}
       fi

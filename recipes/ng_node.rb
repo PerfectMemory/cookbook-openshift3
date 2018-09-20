@@ -77,7 +77,7 @@ if helper.get_nodevar('custom_origin-dns')
   end
 else
   cookbook_file '/etc/NetworkManager/dispatcher.d/99-origin-dns.sh' do
-    source '99-origin-dns.sh'
+    source 'openshift_node/99-origin-dns.sh'
     owner 'root'
     group 'root'
     mode '0755'
