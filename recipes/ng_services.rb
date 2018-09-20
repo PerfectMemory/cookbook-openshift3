@@ -22,13 +22,13 @@ end
 
 execute 'Restart API' do
   command '/usr/local/bin/master-restart api'
-	action :nothing
+  action :nothing
   only_if "[[ $(systemctl show -p SubState #{node['cookbook-openshift3']['openshift_service_type']}-node | cut -d'=' -f2) == 'running' ]]"
 end
 
 execute 'Restart Controller' do
   command '/usr/local/bin/master-restart controllers'
-	action :nothing
+  action :nothing
   only_if "[[ $(systemctl show -p SubState #{node['cookbook-openshift3']['openshift_service_type']}-node | cut -d'=' -f2) == 'running' ]]"
 end
 
