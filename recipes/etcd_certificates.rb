@@ -98,7 +98,7 @@ if is_certificate_server
 
       execute "ETCD Sign and create the #{etcd_certificates} crt for #{etcd_master['fqdn']}" do
         command "openssl ca -name #{node['cookbook-openshift3']['etcd_ca_name']} -config #{node['cookbook-openshift3']['etcd_openssl_conf']} -out #{etcd_certificates}.crt -in #{etcd_certificates}.csr -extensions #{node['cookbook-openshift3']["etcd_ca_exts_#{etcd_certificates}"]} -batch"
-        environment 'SAN' => ''
+        environment 'SAN' => "IP:#{etcd_master['ipaddress']}"
         cwd "#{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_master['fqdn']}"
         creates "#{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_master['fqdn']}/#{etcd_certificates}.crt"
       end
