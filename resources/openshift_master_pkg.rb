@@ -23,7 +23,7 @@ action :install do
         docker create --name temp-cli ${DOCKER_IMAGE}:${DOCKER_TAG}
         docker cp temp-cli:/usr/bin/${ORIGIN} /usr/local/bin/${ORIGIN}
         docker rm temp-cli
-        BASH
+      BASH
       environment(
         'DOCKER_IMAGE' => node['cookbook-openshift3']['openshift_docker_master_image'],
         'DOCKER_TAG' => node['cookbook-openshift3']['openshift_docker_image_version'],

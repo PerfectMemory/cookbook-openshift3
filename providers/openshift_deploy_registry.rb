@@ -65,49 +65,60 @@ action :create do
       end
 
       execute 'Attach registry-certificates secret volume' do
-        command "#{oc_client} volume dc/docker-registry --add --type=secret --secret-name=registry-certificates -m /etc/secrets -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+        command "#{oc_client} volume deploymentconfig/docker-registry --add --type=secret --secret-name=registry-certificates -m /etc/secrets -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
         environment(
           'namespace_registry' => node['cookbook-openshift3']['openshift_hosted_registry_namespace']
         )
-        not_if "#{oc_client} volume dc/docker-registry -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | grep /etc/secrets"
+        not_if "#{oc_client} volume deploymentconfig/docker-registry -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | grep /etc/secrets"
       end
 
       execute 'Configure certificates in registry deplomentConfig' do
-        command "#{oc_client} env dc/docker-registry REGISTRY_HTTP_TLS_CERTIFICATE=/etc/secrets/registry.crt REGISTRY_HTTP_TLS_KEY=/etc/secrets/registry.key -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+        command "#{oc_client} env deploymentconfig/docker-registry REGISTRY_HTTP_TLS_CERTIFICATE=/etc/secrets/registry.crt REGISTRY_HTTP_TLS_KEY=/etc/secrets/registry.key -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
         environment(
           'namespace_registry' => node['cookbook-openshift3']['openshift_hosted_registry_namespace']
         )
-        not_if "[[ `#{oc_client} env dc/docker-registry --list -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"REGISTRY_HTTP_TLS_CERTIFICATE=/etc/secrets/registry.crt\" && `#{oc_client} env dc/docker-registry --list -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"REGISTRY_HTTP_TLS_KEY=/etc/secrets/registry.key\" ]]"
+        not_if "[[ `#{oc_client} env deploymentconfig/docker-registry --list -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"REGISTRY_HTTP_TLS_CERTIFICATE=/etc/secrets/registry.crt\" && `#{oc_client} env deploymentconfig/docker-registry --list -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"REGISTRY_HTTP_TLS_KEY=/etc/secrets/registry.key\" ]]"
+      end
+
+      if node['cookbook-openshift3']['openshift_push_via_dns']
+        execute 'Update registry environment variables when pushing via dns' do
+          command "#{oc_client} env deploymentconfig/docker-registry ${environment} -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+          environment(
+            'namespace_registry' => node['cookbook-openshift3']['openshift_hosted_registry_namespace'],
+            'environment' => node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 9 ? 'REGISTRY_OPENSHIFT_SERVER_ADDR=docker-registry.default.svc:5000' : 'OPENSHIFT_DEFAULT_REGISTRY=docker-registry.default.svc:5000'
+          )
+          not_if "[[ `#{oc_client} env deploymentconfig/docker-registry --list -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"${environment}\" ]]"
+        end
       end
 
       execute 'Update registry liveness probe from HTTP to HTTPS' do
-        command "#{oc_client} patch dc/docker-registry -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"registry\",\"livenessProbe\":{\"httpGet\":{\"scheme\":\"HTTPS\"}}}]}}}}' -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+        command "#{oc_client} patch deploymentconfig/docker-registry -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"registry\",\"livenessProbe\":{\"httpGet\":{\"scheme\":\"HTTPS\"}}}]}}}}' -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
         environment(
           'namespace_registry' => node['cookbook-openshift3']['openshift_hosted_registry_namespace']
         )
-        not_if "[[ `#{oc_client} get dc/docker-registry -o jsonpath=\'{.spec.template.spec.containers[*].livenessProbe.httpGet.scheme}\' -n ${namespace_registry} --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"HTTPS\" ]]"
+        not_if "[[ `#{oc_client} get deploymentconfig/docker-registry -o jsonpath=\'{.spec.template.spec.containers[*].livenessProbe.httpGet.scheme}\' -n ${namespace_registry} --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"HTTPS\" ]]"
       end
 
       execute 'Update registry readiness probe from HTTP to HTTPS' do
-        command "#{oc_client} patch dc/docker-registry -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"registry\",\"readinessProbe\":{\"httpGet\":{\"scheme\":\"HTTPS\"}}}]}}}}' -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+        command "#{oc_client} patch deploymentconfig/docker-registry -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"registry\",\"readinessProbe\":{\"httpGet\":{\"scheme\":\"HTTPS\"}}}]}}}}' -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
         environment(
           'namespace_registry' => node['cookbook-openshift3']['openshift_hosted_registry_namespace']
         )
-        not_if "[[ `#{oc_client} get dc/docker-registry -o jsonpath=\'{.spec.template.spec.containers[*].readinessProbe.httpGet.scheme}\' -n ${namespace_registry} --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"HTTPS\" ]]"
+        not_if "[[ `#{oc_client} get deploymentconfig/docker-registry -o jsonpath=\'{.spec.template.spec.containers[*].readinessProbe.httpGet.scheme}\' -n ${namespace_registry} --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"HTTPS\" ]]"
       end
     end
 
     if new_resource.persistent_registry
       execute 'Add volume to Hosted Registry' do
-        command "#{oc_client} volume dc/docker-registry --add --overwrite -t persistentVolumeClaim --claim-name=${registry_claim} --name=registry-storage -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+        command "#{oc_client} volume deploymentconfig/docker-registry --add --overwrite -t persistentVolumeClaim --claim-name=${registry_claim} --name=registry-storage -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
         environment(
           'namespace_registry' => node['cookbook-openshift3']['openshift_hosted_registry_namespace'],
           'registry_claim' => new_resource.persistent_volume_claim_name
         )
-        not_if "[[ `#{oc_client} get -o template dc/docker-registry --template={{.spec.template.spec.volumes}} -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"${registry_claim}\" ]]"
+        not_if "[[ `#{oc_client} get -o template deploymentconfig/docker-registry --template={{.spec.template.spec.volumes}} -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig` =~ \"${registry_claim}\" ]]"
       end
       execute 'Auto Scale Registry based on label' do
-        command "#{oc_client} scale dc/docker-registry --replicas=${replica_number} -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+        command "#{oc_client} scale deploymentconfig/docker-registry --replicas=${replica_number} -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
         environment(
           'replica_number' => Mixlib::ShellOut.new("#{oc_client} get node --no-headers --selector=#{node['cookbook-openshift3']['openshift_hosted_registry_selector']} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | wc -l").run_command.stdout.strip,
           'namespace_registry' => node['cookbook-openshift3']['openshift_hosted_registry_namespace']

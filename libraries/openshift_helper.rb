@@ -202,6 +202,7 @@ module OpenShiftHelper
   class UtilHelper
     def initialize(filepath)
       return ArgumentError, "File '#{filepath}' does not exist" unless File.exist?(filepath)
+
       @contents = File.open(filepath, &:read)
       @original_pathname = filepath
       @changes = false

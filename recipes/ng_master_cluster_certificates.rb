@@ -73,7 +73,7 @@ if is_certificate_server
     end
 
     execute "Create the master server certificates for #{master_server['fqdn']}" do
-      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} ca create-server-cert \
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm ca create-server-cert \
 			        ${legacy_certs} \
               --hostnames=#{(node['cookbook-openshift3']['erb_corsAllowedOrigins'] + [master_server['ipaddress'], master_server['fqdn'], node['cookbook-openshift3']['openshift_common_api_hostname']]).uniq.join(',')} \
               --cert=#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/master.server.crt \
@@ -90,7 +90,7 @@ if is_certificate_server
     end
 
     execute "Generate master client configuration for #{master_server['fqdn']}" do
-      command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} create-api-client-config \
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm create-api-client-config \
               --certificate-authority=#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/ca.crt \
               --master=https://#{master_server['fqdn']}:#{node['cookbook-openshift3']['openshift_master_api_port']} \
               --public-master=https://#{master_server['fqdn']}:#{node['cookbook-openshift3']['openshift_master_api_port']} \
@@ -139,7 +139,7 @@ if is_certificate_server
         block do
           kubeconfig = YAML.load_file("#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/openshift-master.kubeconfig")
           kubeconfig['clusters'][0]['cluster']['certificate-authority-data'] = Base64.encode64(::File.read("#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/ca-bundle.crt")).delete("\n")
-          open("#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/openshift-master.kubeconfig", 'w') { |f| f << kubeconfig.to_yaml }
+          File.open("#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/openshift-master.kubeconfig", 'w') { |f| f << kubeconfig.to_yaml }
         end
         only_if { ::File.file?(node['cookbook-openshift3']['redeploy_cluster_ca_certserver_control_flag']) }
       end
@@ -148,7 +148,7 @@ if is_certificate_server
         block do
           kubeconfig = YAML.load_file("#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/admin.kubeconfig")
           kubeconfig['clusters'][0]['cluster']['certificate-authority-data'] = Base64.encode64(::File.read("#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/ca-bundle.crt")).delete("\n")
-          open("#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/admin.kubeconfig", 'w') { |f| f << kubeconfig.to_yaml }
+          File.open("#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/admin.kubeconfig", 'w') { |f| f << kubeconfig.to_yaml }
         end
         only_if { ::File.file?(node['cookbook-openshift3']['redeploy_cluster_ca_certserver_control_flag']) }
       end

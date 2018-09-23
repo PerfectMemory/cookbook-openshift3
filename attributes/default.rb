@@ -50,8 +50,8 @@ default['cookbook-openshift3']['ose_version'] = nil
 default['cookbook-openshift3']['persistent_storage'] = []
 default['cookbook-openshift3']['openshift_deployment_type'] = 'enterprise'
 default['cookbook-openshift3']['ose_major_version'] = '3.10'
-default['cookbook-openshift3']['openshift_push_via_dns'] = (node['cookbook-openshift3']['ose_major_version'].to_f >= 3.6)
-default['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'v3.9' : 'v3.9.0'
+default['cookbook-openshift3']['openshift_push_via_dns'] = (node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 6)
+default['cookbook-openshift3']['openshift_docker_image_version'] = 'v3.10'
 default['cookbook-openshift3']['upgrade'] = false
 default['cookbook-openshift3']['deploy_containerized'] = false
 default['cookbook-openshift3']['deploy_example'] = false
@@ -108,8 +108,6 @@ default['cookbook-openshift3']['openshift_common_ip'] = node['ipaddress']
 default['cookbook-openshift3']['openshift_common_public_ip'] = node['ipaddress']
 default['cookbook-openshift3']['openshift_common_admin_binary'] = node['cookbook-openshift3']['deploy_containerized'] == true ? '/usr/local/bin/oc adm' : '/usr/bin/oc adm'
 default['cookbook-openshift3']['openshift_common_client_binary'] = node['cookbook-openshift3']['deploy_containerized'] == true ? '/usr/local/bin/oc' : '/usr/bin/oc'
-default['cookbook-openshift3']['openshift_common_service_accounts'] = []
-default['cookbook-openshift3']['openshift_common_service_accounts'] = [{ 'name' => 'router', 'namespace' => 'default', 'scc' => ['hostnetwork'] }]
 default['cookbook-openshift3']['openshift_common_service_accounts_additional'] = []
 default['cookbook-openshift3']['openshift_common_use_openshift_sdn'] = true
 default['cookbook-openshift3']['openshift_common_sdn_network_plugin_name'] = 'redhat/openshift-ovs-subnet'
@@ -219,9 +217,11 @@ default['cookbook-openshift3']['openshift_node_read_only_port'] = nil # usually 
 if node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10
   default['cookbook-openshift3']['openshift_hosted_router_selector'] = 'node-role.kubernetes.io/infra=true'
   default['cookbook-openshift3']['openshift_hosted_registry_selector'] = 'node-role.kubernetes.io/infra=true'
+  default['cookbook-openshift3']['openshift_common_service_accounts'] = [{ 'name' => 'router', 'namespace' => 'default', 'scc' => ['hostnetwork'] }, { 'name' => 'sync', 'namespace' => 'openshift-node', 'scc' => ['privileged'] }, { 'name' => 'sdn', 'namespace' => 'openshift-sdn', 'scc' => ['privileged'], 'selector' => '' }, { 'name' => 'service-catalog-apiserver', 'namespace' => 'kube-service-catalog', 'scc' => ['hostmount-anyuid'], 'selector' => '' }, { 'name' => 'apiserver', 'namespace' => 'openshift-template-service-broker', 'selector' => '' }, { 'name' => 'templateservicebroker-client', 'namespace' => 'openshift-template-service-broker', 'selector' => '' }]
 else
   default['cookbook-openshift3']['openshift_hosted_router_selector'] = 'region=infra'
   default['cookbook-openshift3']['openshift_hosted_registry_selector'] = 'region=infra'
+  default['cookbook-openshift3']['openshift_common_service_accounts'] = [{ 'name' => 'router', 'namespace' => 'default', 'scc' => ['hostnetwork'] }]
 end
 
 default['cookbook-openshift3']['openshift_hosted_deploy_custom_router'] = false
@@ -317,3 +317,6 @@ default['cookbook-openshift3']['openshift_core_api_list'] = %w(apps.openshift.io
 default['cookbook-openshift3']['openshift_master_csr_sa'] = 'node-bootstrapper'
 default['cookbook-openshift3']['openshift_master_csr_namespace'] = 'openshift-infra'
 default['cookbook-openshift3']['image_streams'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? %w(image-streams-rhel7.json dotnet_imagestreams.json) : %w(image-streams-centos7.json dotnet_imagestreams_centos.json)
+default['cookbook-openshift3']['openshift_service_catalog_async_bindings_enabled'] = true
+default['cookbook-openshift3']['openshift_service_catalog_image'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'registry.access.redhat.com/openshift3/ose-service-catalog' : 'docker.io/openshift/origin-service-catalog'
+default['cookbook-openshift3']['template_service_broker_image'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'registry.access.redhat.com/openshift3/ose-template-service-broker' : 'docker.io/openshift/origin-template-service-broker'

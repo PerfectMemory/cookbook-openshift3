@@ -39,6 +39,5 @@ end
 include_recipe 'cookbook-openshift3::ng_certificate_server' if is_certificate_server
 include_recipe 'cookbook-openshift3::ng_node' if is_node_server
 include_recipe 'cookbook-openshift3::ng_etcd_cluster' if is_etcd_server
-include_recipe 'cookbook-openshift3::ng_master' if is_master_server
-include_recipe 'cookbook-openshift3::ng_nodes_certificates' if is_certificate_server
+include_recipe 'cookbook-openshift3::ng_master' if is_master_server || is_certificate_server
 include_recipe 'cookbook-openshift3::ng_node_join' if is_node_server

@@ -28,21 +28,21 @@ def generate_secrets(secret)
   secret_skel = { 'apiVersion' => 'v1', 'kind' => 'Secret', 'metadata' => {}, 'data' => {}, 'type' => 'Opaque' }
   secret_skel['metadata'] = secret['metadata']
   secret_skel['data'] = secret['data']
-  open("#{FOLDER}/templates/#{secret['metadata']['name']}.yaml", 'w') { |f| f << secret_skel.to_yaml }
+  File.open("#{FOLDER}/templates/#{secret['metadata']['name']}.yaml", 'w') { |f| f << secret_skel.to_yaml }
 end
 
 def generate_routes(route)
   route_skel = { 'apiVersion' => 'v1', 'kind' => 'Route', 'metadata' => {}, 'spec' => {} }
   route_skel['metadata'] = route['metadata']
   route_skel['spec'] = route['spec']
-  open("#{FOLDER}/templates/#{route['metadata']['name']}-route.yaml", 'w') { |f| f << route_skel.to_yaml }
+  File.open("#{FOLDER}/templates/#{route['metadata']['name']}-route.yaml", 'w') { |f| f << route_skel.to_yaml }
 end
 
 def generate_serviceaccounts(serviceaccount)
   serviceaccount_skel = { 'apiVersion' => 'v1', 'kind' => 'ServiceAccount', 'metadata' => {} }
   serviceaccount_skel['metadata'] = serviceaccount['metadata']
   serviceaccount_skel['secrets'] = serviceaccount['secrets'] if serviceaccount.key?('secrets')
-  open("#{FOLDER}/templates/#{serviceaccount['metadata']['name']}-serviceaccount.yaml", 'w') { |f| f << serviceaccount_skel.to_yaml }
+  File.open("#{FOLDER}/templates/#{serviceaccount['metadata']['name']}-serviceaccount.yaml", 'w') { |f| f << serviceaccount_skel.to_yaml }
 end
 
 def generate_rolebindings(rolebinding)
@@ -51,7 +51,7 @@ def generate_rolebindings(rolebinding)
   rolebinding_skel['metadata'] = rolebinding['metadata']
   rolebinding_skel['roleRef'] = rolebinding['rolerefs']
   rolebinding_skel['subjects'] = rolebinding['subjects']
-  open("#{FOLDER}/templates/#{rolebinding['metadata']['name']}-rolebinding.yaml", 'w') { |f| f << rolebinding_skel.to_yaml }
+  File.open("#{FOLDER}/templates/#{rolebinding['metadata']['name']}-rolebinding.yaml", 'w') { |f| f << rolebinding_skel.to_yaml }
 end
 
 def generate_roles(role)
@@ -59,7 +59,7 @@ def generate_roles(role)
   role_skel = { 'apiVersion' => 'v1', 'kind' => type, 'metadata' => {}, 'rules' => {} }
   role_skel['metadata'] = role['metadata']
   role_skel['rules'] = role['rules']
-  open("#{FOLDER}/templates/#{role['metadata']['name']}-role.yaml", 'w') { |f| f << role_skel.to_yaml }
+  File.open("#{FOLDER}/templates/#{role['metadata']['name']}-role.yaml", 'w') { |f| f << role_skel.to_yaml }
 end
 
 def generate_services(service)
@@ -68,7 +68,7 @@ def generate_services(service)
   service_skel['spec']['ports'] = service['ports']
   service_skel['spec']['selector'] = service['selector']
   service_skel['spec']['clusterIP'] = 'None' if service.key?('headless')
-  open("#{FOLDER}/templates/#{service['metadata']['name']}-service.yaml", 'w') { |f| f << service_skel.to_yaml }
+  File.open("#{FOLDER}/templates/#{service['metadata']['name']}-service.yaml", 'w') { |f| f << service_skel.to_yaml }
 end
 
 action :delete do
@@ -176,16 +176,12 @@ end
 action :create do
   converge_by "Deploying Logging on #{node['fqdn']}" do
     ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
-    FOLDER_LOGGING = case ose_major_version.split('.')[1].to_i
-                     when 6
-                       'logging_36'
-                     when 7
-                       'logging_37'
-                     when 9
-                       'logging_39'
-                     else
+    FOLDER_LOGGING = if ose_major_version.split('.')[1].to_i < 6
                        'logging_legacy'
+                     elsif ose_major_version.split('.')[1].to_i >= 6
+                       "logging_3#{ose_major_version.split('.')[1]}"
                      end
+
     CERT_FOLDER = node['cookbook-openshift3']['openshift_common_base_dir'] + '/logging'
     OAUTH_SECRET = random_password(64)
 
@@ -372,6 +368,7 @@ action :create do
 
     %w(fluent.conf fluentd-throttle-config.yaml secure-forward.conf).each do |fluent|
       next if ose_major_version.split('.')[1].to_i >= 6 && fluent == 'fluent.conf'
+
       cookbook_file "#{FOLDER}/#{fluent}" do
         source "logging/#{fluent}"
       end
@@ -409,6 +406,7 @@ action :create do
         services = [{ 'metadata' => { 'name' => 'logging-es', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es' }, 'ports' => [{ 'port' => 9200, 'targetPort' => 'restapi' }] }, { 'metadata' => { 'name' => 'logging-es-cluster', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es' }, 'ports' => [{ 'name' => 'cql-port', 'port' => 9300 }] }, { 'metadata' => { 'name' => 'logging-kibana', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'kibana' }, 'ports' => [{ 'port' => 443, 'targetPort' => 'oaproxy' }] }, { 'metadata' => { 'name' => 'logging-es-ops', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es-ops' }, 'ports' => [{ 'port' => 9200, 'targetPort' => 'restapi' }] }, { 'metadata' => { 'name' => 'logging-es-ops-cluster', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'es-ops' }, 'ports' => [{ 'name' => 'cql-port', 'port' => 9300 }] }, { 'metadata' => { 'name' => 'logging-kibana-ops', 'labels' => { 'logging-infra' => 'support' } }, 'selector' => { 'provider' => 'openshift', 'component' => 'kibana-ops' }, 'ports' => [{ 'port' => 443, 'targetPort' => 'oaproxy' }] }]
         services.each do |svc|
           next if !node['cookbook-openshift3']['openshift_logging_use_ops'] && /-ops/ =~ svc['metadata']['name']
+
           generate_services(svc)
         end
       end
@@ -442,6 +440,7 @@ action :create do
         generate_rolebindings(rolebinding)
         routes.each do |route|
           next if !node['cookbook-openshift3']['openshift_logging_use_ops'] && /-ops/ =~ route['metadata']['name']
+
           generate_routes(route)
         end
       end

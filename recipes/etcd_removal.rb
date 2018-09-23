@@ -30,6 +30,7 @@ unless remove_etcd_servers.empty?
 
     remove_etcd_servers.each do |etcd|
       next if ::File.file?("#{node['cookbook-openshift3']['etcd_generated_remove_dir']}/.removed-#{etcd['fqdn']}")
+
       file "#{node['cookbook-openshift3']['etcd_generated_remove_dir']}/.removed-#{etcd['fqdn']}" do
         action :nothing
       end

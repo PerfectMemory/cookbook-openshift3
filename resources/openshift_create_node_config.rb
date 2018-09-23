@@ -121,16 +121,6 @@ action :create_sdn do
       end
     end
 
-    execute 'Ensure project openshift-sdn exists' do
-      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm new-project openshift-sdn --node-selector=\"\" --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
-      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get project openshift-sdn --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
-    end
-
-    execute 'Ensure the sdn service account can run privileged' do
-      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm policy add-scc-to-user privileged system:serviceaccount:openshift-sdn:sdn --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
-      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get scc privileged --template {{.users}} | grep system:serviceaccount:openshift-sdn:sdn --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
-    end
-
     execute 'Temporary fix until we fix "oc apply" for image stream tags (sdn)' do
       command "#{node['cookbook-openshift3']['openshift_client_binary']} delete -n openshift-sdn istag node:v3.10 --ignore-not-found --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
     end
@@ -178,6 +168,166 @@ action :create_bootstrap_controller do
           action.run_action(:run)
         end
       end
+    end
+  end
+end
+
+action :create_kube_service_catalog do
+  converge_by 'Setup the Service Catalog' do
+    server_info = OpenShiftHelper::NodeHelper.new(node)
+    etcd_servers = server_info.etcd_servers
+
+    remote_directory "#{Chef::Config[:file_cache_path]}/service_catalog" do
+      source 'openshift_control_plane/service_catalog'
+    end
+
+    generated_certs_dir = "#{node['cookbook-openshift3']['openshift_common_base_dir']}/service-catalog"
+
+    execute 'Make kube-service-catalog project network global' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm pod-network make-projects-global kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      only_if { node['cookbook-openshift3']['openshift_common_sdn_network_plugin_name'] == 'redhat/openshift-ovs-multitenant' }
+    end
+
+    execute 'Generate signing cert' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm ca create-signer-cert \
+              --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig \
+              --cert=#{generated_certs_dir}/ca.crt \
+              --key=#{generated_certs_dir}/ca.key \
+              --serial=#{generated_certs_dir}/apiserver.serial.txt \
+              --name=service-catalog-signer"
+      creates "#{generated_certs_dir}/ca.crt"
+    end
+
+    execute 'Generating API Server keys' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm ca create-server-cert \
+              --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig \
+              --hostnames='apiserver.kube-service-catalog.svc,apiserver.kube-service-catalog.svc.cluster.local,apiserver.kube-service-catalog' \
+              --cert=#{generated_certs_dir}/apiserver.crt \
+              --key=#{generated_certs_dir}/apiserver.key \
+              --signer-cert=#{generated_certs_dir}/ca.crt \
+              --signer-key=#{generated_certs_dir}/ca.key \
+              --signer-serial=#{generated_certs_dir}/apiserver.serial.txt"
+      creates "#{generated_certs_dir}/apiserver.crt"
+    end
+
+    execute 'Create apiserver-ssl secret' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create secret generic apiserver-ssl --from-file=tls.crt=#{generated_certs_dir}/apiserver.crt --from-file=tls.key=#{generated_certs_dir}/apiserver.key -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get secret apiserver-ssl -n kube-service-catalog --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    ruby_block 'Prepare api service' do
+      block do
+        api_service = YAML.load_file("#{Chef::Config[:file_cache_path]}/service_catalog/servicecatalog.k8s.yaml")
+        api_service['spec']['caBundle'] = Base64.strict_encode64(::File.read("#{generated_certs_dir}/ca.crt"))
+
+        file "#{Chef::Config[:file_cache_path]}/service_catalog/servicecatalog.yaml" do
+          content api_service.to_yaml
+        end
+      end
+    end
+
+    execute 'Create api service' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create -f #{Chef::Config[:file_cache_path]}/service_catalog/servicecatalog.yaml -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get apiservices.apiregistration v1beta1.servicecatalog.k8s.io -n kube-service-catalog --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    { 'service-catalog-role-bindings' => 'kube-service-catalog', 'kube-system-service-catalog-role-bindings' => 'kube-system' }.each_pair do |k, v|
+      execute "Deploy template #{k} in #{v} namespace" do
+        command "#{node['cookbook-openshift3']['openshift_client_binary']} create -f #{Chef::Config[:file_cache_path]}/service_catalog/#{k} -n #{v} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+        not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get template #{k} -n #{v} --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      end
+
+      execute "Process template #{k} in #{v} namespace" do
+        command "#{node['cookbook-openshift3']['openshift_client_binary']} process #{k} -n #{v} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | oc apply -f - -n #{v}"
+      end
+    end
+
+    execute 'Apply Service Catalog cluster roles' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} auth reconcile -f #{Chef::Config[:file_cache_path]}/service_catalog/openshift_catalog_clusterroles.yml -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    execute 'Set SA cluster-role' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} adm policy add-cluster-role-to-user admin system:serviceaccount:kube-service-catalog:default -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get clusterrolebinding admin --template={{.userNames}} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | grep 'system:serviceaccount:kube-service-catalog:default'"
+    end
+
+    template "#{Chef::Config[:file_cache_path]}/service_catalog/service_catalog_api_server.yml" do
+      source 'openshift_control_plane/service_catalog/api_server.erb'
+      variables(
+        lazy do
+          {
+            cors_allowed_origin: 'localhost',
+            etcd_servers: etcd_servers.map { |srv| "https://#{srv['ipaddress']}:2379" }.join(','),
+            ca_hash: Digest::SHA1.file("#{generated_certs_dir}/ca.crt").hexdigest,
+            etcd_cafile: ::File.exist?('/etc/origin/master/master.etcd-ca.crt') ? '/etc/origin/master/master.etcd-ca.crt' : '/etc/origin/master/ca-bundle.crt',
+            openshift_service_catalog_image: "#{node['cookbook-openshift3']['openshift_service_catalog_image']}:#{node['cookbook-openshift3']['openshift_docker_image_version']}"
+          }
+        end
+      )
+    end
+
+    execute 'Set Service Catalog API Server daemonset' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create -f #{Chef::Config[:file_cache_path]}/service_catalog/service_catalog_api_server.yml -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get ds apiserver -n kube-service-catalog --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    execute 'Set Service Catalog API Server service' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create -f #{Chef::Config[:file_cache_path]}/service_catalog/apiserver-service.yaml -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get svc apiserver -n kube-service-catalog --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    execute 'Set Service Catalog API Server route' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create -f #{Chef::Config[:file_cache_path]}/service_catalog/service_catalog_api_route.yml -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get route apiserver -n kube-service-catalog --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    template "#{Chef::Config[:file_cache_path]}/service_catalog/controller_manager.yml" do
+      source 'openshift_control_plane/service_catalog/controller_manager.erb'
+      variables(
+        openshift_service_catalog_image: "#{node['cookbook-openshift3']['openshift_service_catalog_image']}:#{node['cookbook-openshift3']['openshift_docker_image_version']}"
+      )
+    end
+
+    execute 'Set Controller Manager deployment' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create -f #{Chef::Config[:file_cache_path]}/service_catalog/controller_manager.yml -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get ds controller-manager -n kube-service-catalog --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    execute 'Set Controller Manager service' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create -f #{Chef::Config[:file_cache_path]}/service_catalog/controller-service.yaml -n kube-service-catalog --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get svc controller-manager -n kube-service-catalog --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+  end
+end
+
+action :create_template_service_broker do
+  converge_by 'Setup the Template broker' do
+    remote_directory "#{Chef::Config[:file_cache_path]}/template_service_broker" do
+      source 'openshift_control_plane/template_service_broker'
+    end
+
+    execute 'Create API_SERVER_CONFIG ConfigMap for TSB' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} create configmap apiserver-config --from-file=#{Chef::Config[:file_cache_path]}/template_service_broker/apiserver-config.yaml -n openshift-template-service-broker --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+      not_if "#{node['cookbook-openshift3']['openshift_client_binary']} get cm apiserver-config -n openshift-template-service-broker --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
+    end
+
+    execute 'Apply template file for TSB' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} process -f #{Chef::Config[:file_cache_path]}/template_service_broker/apiserver-template.yaml -p IMAGE='#{node['cookbook-openshift3']['template_service_broker_image']}:#{node['cookbook-openshift3']['openshift_docker_image_version']}' --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig -n openshift-template-service-broker | oc apply -f -"
+    end
+
+    execute 'Reconcile with RBAC file for TSB' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} process -f #{Chef::Config[:file_cache_path]}/template_service_broker/rbac-template.yaml --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig -n openshift-template-service-broker | oc apply -f -"
+    end
+
+    execute 'Wait for TSB API to become available' do
+      command '[[ $(curl --silent https://apiserver.openshift-template-service-broker.svc/healthz --cacert /etc/origin/master/service-signer.crt) =~ "ok" ]]'
+      retries 60
+      retry_delay 2
+    end
+
+    execute 'Register TSB with broker' do
+      command "#{node['cookbook-openshift3']['openshift_client_binary']} process -f #{Chef::Config[:file_cache_path]}/template_service_broker/template-service-broker-registration.yaml -p CA_BUNDLE=${ca_bundle} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig -n openshift-template-service-broker | oc apply -f -"
+      environment 'ca_bundle' => Base64.strict_encode64(::File.read('/etc/origin/master/service-signer.crt'))
     end
   end
 end

@@ -65,17 +65,20 @@ action :delete do
       end
     end
 
-    helper.remove_dir('/var/lib/origin/*')
-
     execute 'Clean Iptables rules' do
       command 'sed -i \'/OS_FIREWALL_ALLOW/d\'  /etc/sysconfig/iptables'
     end
 
-    helper.remove_dir('/etc/iptables.d/firewall_*')
-
     execute 'Clean Iptables saved rules' do
       command 'sed -i \'/OS_FIREWALL_ALLOW/d\' /etc/sysconfig/iptables.save'
       only_if '[ -f /etc/sysconfig/iptables.save ]'
+    end
+
+    ruby_block 'Remove left-over files' do
+      block do
+        helper.remove_dir('/etc/iptables.d/firewall_*')
+        helper.remove_dir('/var/lib/origin/*')
+      end
     end
 
     Mixlib::ShellOut.new('systemctl daemon-reload').run_command
