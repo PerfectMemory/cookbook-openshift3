@@ -13,8 +13,11 @@ is_node_server = server_info.on_node_server?
 is_certificate_server = server_info.on_certificate_server?
 
 if should_be_configured
-  include_recipe 'cookbook-openshift3::ng_commons' if node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10
-  return if node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10
+  if node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10
+    include_recipe 'cookbook-openshift3::ng_commons' if Chef::VERSION.to_f >= 14.0
+    Chef::Log.error('For 3.10, CHEF client must be 14.0+') if Chef::VERSION.to_f < 14.0
+    return
+  end
 
   if ::File.file?(node['cookbook-openshift3']['adhoc_turn_off_openshift3_cookbook'])
     Chef::Log.warn('adhoc_turn_off_openshift3_cookbook file found: ' + node['cookbook-openshift3']['adhoc_turn_off_openshift3_cookbook'])

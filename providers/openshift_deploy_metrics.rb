@@ -27,21 +27,21 @@ def generate_secrets(secret)
   secret_skel = { 'apiVersion' => 'v1', 'kind' => 'Secret', 'metadata' => {}, 'data' => {} }
   secret_skel['metadata'] = secret['metadata']
   secret_skel['data'] = secret['data']
-  File.open("#{FOLDER}/templates/#{secret['metadata']['name']}.yaml", 'w') { |f| f << secret_skel.to_yaml }
+  open("#{FOLDER}/templates/#{secret['metadata']['name']}.yaml", 'w') { |f| f << secret_skel.to_yaml }
 end
 
 def generate_routes(route)
   route_skel = { 'apiVersion' => 'v1', 'kind' => 'Route', 'metadata' => {}, 'spec' => {} }
   route_skel['metadata'] = route['metadata']
   route_skel['spec'] = route['spec']
-  File.open("#{FOLDER}/templates/#{route['metadata']['name']}-route.yaml", 'w') { |f| f << route_skel.to_yaml }
+  open("#{FOLDER}/templates/#{route['metadata']['name']}-route.yaml", 'w') { |f| f << route_skel.to_yaml }
 end
 
 def generate_serviceaccounts(serviceaccount)
   serviceaccount_skel = { 'apiVersion' => 'v1', 'kind' => 'ServiceAccount', 'metadata' => {} }
   serviceaccount_skel['metadata'] = serviceaccount['metadata']
   serviceaccount_skel['secrets'] = serviceaccount['secrets'] if serviceaccount.key?('secrets')
-  File.open("#{FOLDER}/templates/#{serviceaccount['metadata']['name']}-serviceaccount.yaml", 'w') { |f| f << serviceaccount_skel.to_yaml }
+  open("#{FOLDER}/templates/#{serviceaccount['metadata']['name']}-serviceaccount.yaml", 'w') { |f| f << serviceaccount_skel.to_yaml }
 end
 
 def generate_rolebindings(rolebinding)
@@ -50,7 +50,7 @@ def generate_rolebindings(rolebinding)
   rolebinding_skel['metadata'] = rolebinding['metadata']
   rolebinding_skel['roleRef'] = rolebinding['rolerefs']
   rolebinding_skel['subjects'] = rolebinding['subjects']
-  File.open("#{FOLDER}/templates/#{rolebinding['metadata']['name']}-rolebinding.yaml", 'w') { |f| f << rolebinding_skel.to_yaml }
+  open("#{FOLDER}/templates/#{rolebinding['metadata']['name']}-rolebinding.yaml", 'w') { |f| f << rolebinding_skel.to_yaml }
 end
 
 def generate_roles(role)
@@ -58,7 +58,7 @@ def generate_roles(role)
   role_skel = { 'apiVersion' => 'v1', 'kind' => type, 'metadata' => {}, 'rules' => {} }
   role_skel['metadata'] = role['metadata']
   role_skel['rules'] = role['rules']
-  File.open("#{FOLDER}/templates/#{role['metadata']['name']}-role.yaml", 'w') { |f| f << role_skel.to_yaml }
+  open("#{FOLDER}/templates/#{role['metadata']['name']}-role.yaml", 'w') { |f| f << role_skel.to_yaml }
 end
 
 def generate_services(service)
@@ -67,7 +67,7 @@ def generate_services(service)
   service_skel['spec']['ports'] = service['ports']
   service_skel['spec']['selector'] = service['selector']
   service_skel['spec']['clusterIP'] = 'None' if service.key?('headless')
-  File.open("#{FOLDER}/templates/#{service['metadata']['name']}-service.yaml", 'w') { |f| f << service_skel.to_yaml }
+  open("#{FOLDER}/templates/#{service['metadata']['name']}-service.yaml", 'w') { |f| f << service_skel.to_yaml }
 end
 
 action :delete do
@@ -181,7 +181,7 @@ action :create do
 
       ruby_block "Generate #{component} certificate" do
         block do
-          ::File.open("#{CERT_FOLDER}/#{component}.pem", 'w+') { |f| f.puts ["#{CERT_FOLDER}/#{component}.key", "#{CERT_FOLDER}/#{component}.crt"].map { |s| IO.read(s) } }
+          open("#{CERT_FOLDER}/#{component}.pem", 'w+') { |f| f.puts ["#{CERT_FOLDER}/#{component}.key", "#{CERT_FOLDER}/#{component}.crt"].map { |s| IO.read(s) } }
         end
         not_if { ::File.exist?("#{CERT_FOLDER}/#{component}.pem") }
       end
@@ -295,6 +295,13 @@ action :create do
         random_word: random_password
       )
       sensitive true
+    end
+
+    template 'Generate hawkular-metrics schema job' do
+      path "#{FOLDER}/templates/hawkular_metrics_schema_job.yaml"
+      source "#{FOLDER_METRICS}/hawkular_metrics_schema_job.erb"
+      sensitive true
+      only_if { node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10 }
     end
 
     template 'Generate cassandra replication controller' do
