@@ -297,6 +297,13 @@ action :create do
       sensitive true
     end
 
+    template 'Generate hawkular-metrics schema job' do
+      path "#{FOLDER}/templates/hawkular_metrics_schema_job.yaml"
+      source "#{FOLDER_METRICS}/hawkular_metrics_schema_job.erb"
+      sensitive true
+			not_if { node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10 }
+    end
+
     template 'Generate cassandra replication controller' do
       path "#{FOLDER}/templates/hawkular-cassandra-1-rc.yaml"
       source "#{FOLDER_METRICS}/hawkular_cassandra_rc.yaml.erb"
