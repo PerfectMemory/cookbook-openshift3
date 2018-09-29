@@ -313,7 +313,7 @@ default['cookbook-openshift3']['openshift_node_local_quota_per_fsgroup'] = ''
 default['cookbook-openshift3']['openshift_node_env_vars'] = {}
 default['cookbook-openshift3']['openshift_node_groups'] = [{ 'name' => 'node-config-master', 'labels' => ['node-role.kubernetes.io/master=true'] }, { 'name' => 'node-config-infra', 'labels' => ['node-role.kubernetes.io/infra=true'] }, { 'name' => 'node-config-compute', 'labels' => ['node-role.kubernetes.io/compute=true'] }, { 'name' => 'node-config-master-infra', 'labels' => ['node-role.kubernetes.io/infra=true,node-role.kubernetes.io/master=true'] }, { 'name' => 'node-config-all-in-one', 'labels' => ['node-role.kubernetes.io/infra=true,node-role.kubernetes.io/master=true,node-role.kubernetes.io/compute=true'] }]
 default['cookbook-openshift3']['openshift_client_binary'] = '/usr/bin/oc'
-default['cookbook-openshift3']['openshift_etcd_static_pod'] = false
+default['cookbook-openshift3']['openshift_etcd_static_pod'] = true
 default['cookbook-openshift3']['openshift_core_api_list'] = %w(apps.openshift.io authorization.openshift.io build.openshift.io image.openshift.io network.openshift.io oauth.openshift.io project.openshift.io quota.openshift.io route.openshift.io security.openshift.io template.openshift.io user.openshift.io)
 default['cookbook-openshift3']['openshift_master_csr_sa'] = 'node-bootstrapper'
 default['cookbook-openshift3']['openshift_master_csr_namespace'] = 'openshift-infra'
