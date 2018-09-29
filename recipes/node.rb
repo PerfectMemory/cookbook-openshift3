@@ -100,7 +100,7 @@ if is_node_server
   template "/etc/sysconfig/#{node['cookbook-openshift3']['openshift_service_type']}-node" do
     source 'service_node.sysconfig.erb'
     variables(sysconfig_vars)
-    notifies :restart, 'service[Restart Node]', :immediately unless node['cookbook-openshift3']['upgrade']
+    notifies :restart, 'service[Restart Node]', :immediately unless node['cookbook-openshift3']['upgrade'] || Mixlib::ShellOut.new("systemctl is-enabled #{node['cookbook-openshift3']['openshift_service_type']}-node").run_command.error?
   end
 
   package "#{node['cookbook-openshift3']['openshift_service_type']}-node" do
@@ -280,8 +280,8 @@ if is_node_server
       kubelet_args: node['cookbook-openshift3']['openshift_node_kubelet_args_default'].merge(node['cookbook-openshift3']['openshift_node_kubelet_args_custom'])
     )
     notifies :run, 'execute[daemon-reload]', :immediately
-    notifies :restart, 'service[Restart Node]', :immediately
     notifies :enable, "systemd_unit[#{node['cookbook-openshift3']['openshift_service_type']}-node]", :immediately
+    notifies :restart, 'service[Restart Node]', :immediately
   end
 
   selinux_policy_boolean 'virt_use_nfs' do

@@ -91,14 +91,6 @@ remote_file "Retrieve ETCD CA cert from Certificate Server[#{certificate_server[
   action :create_if_missing
 end
 
-# %w(client.crt client.key).each do |certificate_type|
-#   file "#{node['cookbook-openshift3']['openshift_master_config_dir']}/#{node['cookbook-openshift3']['master_etcd_cert_prefix']}#{certificate_type}" do
-#     owner 'root'
-#     group 'root'
-#     mode '0600'
-#   end
-# end
-
 remote_file "Retrieve master certificates from Certificate Server[#{certificate_server['fqdn']}]" do
   path "#{node['cookbook-openshift3']['openshift_master_config_dir']}/openshift-#{node['fqdn']}.tgz.enc"
   source "http://#{certificate_server['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/master/generated_certs/openshift-#{node['fqdn']}.tgz.enc"

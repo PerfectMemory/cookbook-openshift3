@@ -37,6 +37,7 @@ if is_etcd_server || is_new_etcd_server
 
     template "/etc/systemd/system/#{node['cookbook-openshift3']['etcd_service_name']}.service" do
       source 'service_etcd-containerized.service.erb'
+      variables(path_bin: node['cookbook-openshift3']['openshift_docker_etcd_image'].include?('coreos') ? '/usr/local/bin/etcd' : '/usr/bin/etcd')
       notifies :run, 'execute[daemon-reload]', :immediately
       notifies :restart, 'service[etcd-service]', :immediately if node['cookbook-openshift3']['upgrade']
     end
