@@ -289,8 +289,8 @@ if is_node_server
   end
 
   execute 'Wait for API to become available before starting Node component' do
-    command "[[ $(curl --silent --tlsv1.2 --max-time 2 ${MASTER_URL}/healthz/ready --cacert #{node['cookbook-openshift3']['openshift_node_config_dir']}/ca.crt) =~ \"ok\" ]]"
-    environment 'MASTER_URL' => node['cookbook-openshift3']['openshift_HA'] ? node['cookbook-openshift3']['openshift_master_api_url'] : "https://#{node['cookbook-openshift3']['openshift_common_api_hostname']}:#{node['cookbook-openshift3']['openshift_master_api_port']}"
+    command "[[ $(curl --silent --tlsv1.2 --max-time 2 -k ${MASTER_URL}/healthz/ready) =~ \"ok\" ]]"
+    environment 'MASTER_URL' => node['cookbook-openshift3']['openshift_master_api_url']
     retries 120
     retry_delay 1
     notifies :start, 'service[Restart Node]', :immediately unless node['cookbook-openshift3']['upgrade'] && node['cookbook-openshift3']['deploy_containerized']
