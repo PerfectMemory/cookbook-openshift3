@@ -289,7 +289,7 @@ if is_node_server
   end
 
   execute 'Wait for API to become available before starting Node component' do
-    command "[[ $(curl --silent --tlsv1.2 --max-time 2 -k ${MASTER_URL}/healthz/ready) =~ \"ok\" ]]"
+    command '[[ $(curl --silent --tlsv1.2 --max-time 2 -k ${MASTER_URL}/healthz/ready) =~ "ok" ]]'
     environment 'MASTER_URL' => node['cookbook-openshift3']['openshift_master_api_url']
     retries 120
     retry_delay 1
