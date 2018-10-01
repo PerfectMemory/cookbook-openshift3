@@ -6,6 +6,7 @@
 
 server_info = OpenShiftHelper::NodeHelper.new(node)
 node_servers = server_info.node_servers
+is_master_server = server_info.on_master_server?
 
 %W(/var/www/html/node #{node['cookbook-openshift3']['openshift_node_generated_configs_dir']}).each do |path|
   directory path do
@@ -23,7 +24,7 @@ else
 end
 
 execute 'Wait for API to become available' do
-  command "[[ $(curl --silent --tlsv1.2 --max-time 2 #{node['cookbook-openshift3']['openshift_master_loopback_api_url']}/healthz/ready --cacert #{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/ca.crt --cacert #{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/ca-bundle.crt) =~ \"ok\" ]]"
+  command is_master_server ? "[[ $(curl --silent --tlsv1.2 --max-time 2 #{node['cookbook-openshift3']['openshift_master_loopback_api_url']}/healthz/ready --cacert #{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/ca.crt --cacert #{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/ca-bundle.crt) =~ \"ok\" ]]" : "[[ $(curl --silent --tlsv1.2 --max-time 2 -k #{node['cookbook-openshift3']['openshift_master_api_url']}/healthz/ready) =~ \"ok\" ]]"
   retries 150
   retry_delay 5
 end
