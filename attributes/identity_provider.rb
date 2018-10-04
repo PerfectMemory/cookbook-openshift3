@@ -10,7 +10,7 @@ default['cookbook-openshift3']['openshift_master_identity_provider']['GitHubIden
 
 default['cookbook-openshift3']['openshift_master_identity_provider']['GoogleIdentityProvider'] = { 'name' => 'google_auth', 'login' => true, 'challenge' => false, 'kind' => 'GoogleIdentityProvider', 'clientID' => 'google_client_id', 'clientSecret' => 'google_client_secret' }
 
-default['cookbook-openshift3']['openshift_master_identity_provider']['HTPasswdPasswordIdentityProvider'] = { 'name' => 'htpasswd_auth', 'login' => true, 'challenge' => true, 'kind' => 'HTPasswdPasswordIdentityProvider', 'filename' => "#{default['cookbook-openshift3']['openshift_common_master_dir']}/openshift-passwd" }
+default['cookbook-openshift3']['openshift_master_identity_provider']['HTPasswdPasswordIdentityProvider'] = node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10 ? { 'name' => 'htpasswd_auth', 'login' => true, 'challenge' => true, 'kind' => 'HTPasswdPasswordIdentityProvider', 'filename' => "#{default['cookbook-openshift3']['openshift_master_config_dir']}/openshift-passwd" } : { 'name' => 'htpasswd_auth', 'login' => true, 'challenge' => true, 'kind' => 'HTPasswdPasswordIdentityProvider', 'filename' => "#{default['cookbook-openshift3']['openshift_common_master_dir']}/openshift-passwd" }
 
 default['cookbook-openshift3']['openshift_master_identity_provider']['LDAPPasswordIdentityProvider'] = { 'name' => 'ldap_identity1', 'login' => true, 'challenge' => true, 'kind' => 'LDAPPasswordIdentityProvider', 'ldap_server' => 'ldap1.domain.local', 'ldap_bind_dn' => '', 'ldap_bind_password' => '', 'ldap_insecure' => true, 'ldap_base_ou' => 'OU=people,DC=domain,DC=local', 'ldap_preferred_username' => 'uid' }
 
