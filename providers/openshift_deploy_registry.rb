@@ -4,7 +4,6 @@
 #
 # Copyright (c) 2015 The Authors, All Rights Reserved.
 
-use_inline_resources
 provides :openshift_deploy_registry if defined? provides
 
 def whyrun_supported?
@@ -53,7 +52,7 @@ action :create do
         only_if "[[ `#{oc_client} get secret registry-certificates -n ${namespace_registry} --no-headers --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | wc -l` -eq 0 ]]"
       end
 
-      %w(default registry).each do |service_account|
+      %w[default registry].each do |service_account|
         execute "Add secret to registry's pod service accounts (#{service_account})" do
           command "#{oc_client} secrets add ${sa} registry-certificates -n ${namespace_registry} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig"
           environment(

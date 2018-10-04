@@ -47,7 +47,7 @@ if is_etcd_server || is_new_etcd_server
       only_if { node['cookbook-openshift3']['openshift_etcd_static_pod'] }
     end
 
-    %W(#{node['cookbook-openshift3']['etcd_conf_dir']} #{node['cookbook-openshift3']['etcd_data_dir']}).each do |etcd_dir|
+    %W[#{node['cookbook-openshift3']['etcd_conf_dir']} #{node['cookbook-openshift3']['etcd_data_dir']}].each do |etcd_dir|
       directory etcd_dir do
         mode '0700'
       end
@@ -102,7 +102,7 @@ if is_etcd_server || is_new_etcd_server
     mode '0600'
   end
 
-  %w(cert peer).each do |certificate_type|
+  %w[cert peer].each do |certificate_type|
     file node['cookbook-openshift3']['etcd_' + certificate_type + '_file'.to_s] do
       owner user_id
       group group_id

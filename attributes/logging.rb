@@ -85,7 +85,7 @@ default['cookbook-openshift3']['openshift_logging_fluentd_es_copy'] = 'false'
 default['cookbook-openshift3']['openshift_logging_fluentd_use_journal'] = 'false'
 default['cookbook-openshift3']['openshift_logging_fluentd_journal_source'] = ''
 default['cookbook-openshift3']['openshift_logging_fluentd_journal_read_from_head'] = 'false'
-default['cookbook-openshift3']['openshift_logging_fluentd_hosts'] = %w(--all)
+default['cookbook-openshift3']['openshift_logging_fluentd_hosts'] = %w[--all]
 default['cookbook-openshift3']['openshift_logging_fluentd_buffer_queue_limit'] = 1024
 default['cookbook-openshift3']['openshift_logging_fluentd_buffer_size_limit'] = '1m'
 
@@ -103,14 +103,14 @@ default['cookbook-openshift3']['openshift_logging_es_client_key'] = '/etc/fluent
 default['cookbook-openshift3']['openshift_logging_es_cluster_size'] = 1
 default['cookbook-openshift3']['openshift_logging_es_cpu_limit'] = ''
 # The logging appenders for the root loggers to write ES logs. Valid values'] = 'file', 'console'
-default['cookbook-openshift3']['openshift_logging_es_log_appenders'] = %w(file)
+default['cookbook-openshift3']['openshift_logging_es_log_appenders'] = %w[file]
 default['cookbook-openshift3']['openshift_logging_es_memory_limit'] = '8Gi'
 default['cookbook-openshift3']['openshift_logging_es_number_of_replicas'] = 0
 default['cookbook-openshift3']['openshift_logging_es_number_of_shards'] = 1
 default['cookbook-openshift3']['openshift_logging_es_pvc_size'] = ''
 default['cookbook-openshift3']['openshift_logging_es_pvc_prefix'] = 'logging-es'
 default['cookbook-openshift3']['openshift_logging_es_recover_after_time'] = '5m'
-default['cookbook-openshift3']['openshift_logging_es_storage_group'] = %w(65534)
+default['cookbook-openshift3']['openshift_logging_es_storage_group'] = %w[65534]
 default['cookbook-openshift3']['openshift_logging_es_nodeselector'] = {}
 
 # Allow cluster-admin or cluster-reader to view operations index
@@ -127,8 +127,8 @@ default['cookbook-openshift3']['openshift_logging_es_ops_memory_limit'] = '8Gi'
 default['cookbook-openshift3']['openshift_logging_es_ops_pvc_size'] = ''
 default['cookbook-openshift3']['openshift_logging_es_ops_pvc_prefix'] = 'logging-es-ops'
 default['cookbook-openshift3']['openshift_logging_es_ops_recover_after_time'] = '5m'
-default['cookbook-openshift3']['openshift_logging_es_ops_storage_group'] = %w(65534)
+default['cookbook-openshift3']['openshift_logging_es_ops_storage_group'] = %w[65534]
 default['cookbook-openshift3']['openshift_logging_es_ops_nodeselector'] = {}
 
 # Storage related defaults
-default['cookbook-openshift3']['openshift_logging_storage_access_modes'] = %w(ReadWriteOnce)
+default['cookbook-openshift3']['openshift_logging_storage_access_modes'] = %w[ReadWriteOnce]

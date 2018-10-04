@@ -246,7 +246,7 @@ execute 'Activate services for Master CONTROLLERS on all masters' do
 end
 
 systemd_unit "#{node['cookbook-openshift3']['openshift_service_type']}-master" do
-  action %i(disable mask)
+  action %i[disable mask]
 end
 
 ruby_block 'Adjust permissions for certificate and key files on Master servers' do

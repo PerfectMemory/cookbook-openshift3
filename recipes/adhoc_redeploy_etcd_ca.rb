@@ -35,7 +35,7 @@ if ::File.file?(node['cookbook-openshift3']['redeploy_etcd_ca_control_flag'])
       recursive true
     end
 
-    %w(certs crl fragments).each do |etcd_ca_sub_dir|
+    %w[certs crl fragments].each do |etcd_ca_sub_dir|
       directory "#{node['cookbook-openshift3']['etcd_ca_dir']}/#{etcd_ca_sub_dir}" do
         owner 'root'
         group 'root'
@@ -74,7 +74,7 @@ if ::File.file?(node['cookbook-openshift3']['redeploy_etcd_ca_control_flag'])
       not_if { ::File.exist?("#{node['cookbook-openshift3']['etcd_ca_dir']}/ca-bundle.crt") }
     end
 
-    %w(ca ca-bundle).each do |etcd_ca|
+    %w[ca ca-bundle].each do |etcd_ca|
       remote_file "/var/www/html/etcd/#{etcd_ca}.crt" do
         source "file://#{node['cookbook-openshift3']['etcd_ca_dir']}/ca-bundle.crt"
         owner 'apache'
@@ -97,7 +97,7 @@ if ::File.file?(node['cookbook-openshift3']['redeploy_etcd_ca_control_flag'])
         group 'apache'
       end
 
-      %w(server peer).each do |etcd_certificates|
+      %w[server peer].each do |etcd_certificates|
         execute "ETCD Create the #{etcd_certificates} csr for #{etcd_master['fqdn']}" do
           command "openssl req -new -keyout #{etcd_certificates}.key -config #{node['cookbook-openshift3']['etcd_openssl_conf']} -out #{etcd_certificates}.csr -reqexts #{node['cookbook-openshift3']['etcd_req_ext']} -batch -nodes -subj /CN=#{etcd_master['fqdn']}"
           environment 'SAN' => "IP:#{etcd_master['ipaddress']}"

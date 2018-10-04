@@ -77,7 +77,7 @@ if is_certificate_server
       action :nothing
     end
 
-    %w(openshift-master.crt openshift-master.key openshift-master.kubeconfig).each do |loopback_master_client|
+    %w[openshift-master.crt openshift-master.key openshift-master.kubeconfig].each do |loopback_master_client|
       remote_file "#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/#{loopback_master_client}" do
         source "file://#{Chef::Config[:file_cache_path]}/openshift_ca_loopback_tmpdir/#{loopback_master_client}"
         only_if { ::File.file?("#{Chef::Config[:file_cache_path]}/openshift_ca_loopback_tmpdir/#{loopback_master_client}") }

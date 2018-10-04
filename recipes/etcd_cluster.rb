@@ -95,7 +95,7 @@ if is_etcd_server || is_new_etcd_server
     mode '0600'
   end
 
-  %w(cert peer).each do |certificate_type|
+  %w[cert peer].each do |certificate_type|
     file node['cookbook-openshift3']['etcd_' + certificate_type + '_file'.to_s] do
       owner 'etcd'
       group 'etcd'

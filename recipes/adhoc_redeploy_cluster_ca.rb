@@ -43,7 +43,7 @@ if ::File.file?(node['cookbook-openshift3']['redeploy_cluster_ca_certserver_cont
       recursive true
     end
 
-    %w(ca.crt ca.key ca.serial.txt ca-bundle.crt).each do |legacy|
+    %w[ca.crt ca.key ca.serial.txt ca-bundle.crt].each do |legacy|
       remote_file "#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}-legacy-ca/#{legacy}" do
         source "file://#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/#{legacy}"
         only_if { ::File.file?("#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/#{legacy}") }
@@ -51,7 +51,7 @@ if ::File.file?(node['cookbook-openshift3']['redeploy_cluster_ca_certserver_cont
       end
     end
 
-    %w(ca.crt ca.key ca.serial.txt ca-bundle.crt openshift-master.crt openshift-master.key openshift-master.kubeconfig).each do |remove_file_ca|
+    %w[ca.crt ca.key ca.serial.txt ca-bundle.crt openshift-master.crt openshift-master.key openshift-master.kubeconfig].each do |remove_file_ca|
       file "#{node['cookbook-openshift3']['master_certs_generated_certs_dir']}/#{remove_file_ca}" do
         action :delete
       end
@@ -86,7 +86,7 @@ if ::File.file?(node['cookbook-openshift3']['redeploy_cluster_ca_certserver_cont
         end
       end
 
-      %w(master.server.crt master.server.key openshift-master.kubeconfig).each do |remove_master_cert|
+      %w[master.server.crt master.server.key openshift-master.kubeconfig].each do |remove_master_cert|
         file "#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{master_server['fqdn']}/#{remove_master_cert}" do
           action :delete
         end

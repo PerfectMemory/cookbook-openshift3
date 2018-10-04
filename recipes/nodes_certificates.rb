@@ -8,7 +8,7 @@ server_info = OpenShiftHelper::NodeHelper.new(node)
 node_servers = server_info.node_servers
 ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
 
-%W(/var/www/html/node #{node['cookbook-openshift3']['openshift_node_generated_configs_dir']}).each do |path|
+%W[/var/www/html/node #{node['cookbook-openshift3']['openshift_node_generated_configs_dir']}].each do |path|
   directory path do
     owner 'apache'
     group 'apache'
