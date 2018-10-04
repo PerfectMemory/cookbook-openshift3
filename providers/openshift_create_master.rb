@@ -43,10 +43,8 @@ action :create do
     case node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i
     when 3..4
       admission_default = node['cookbook-openshift3']['openshift_master_admission_plugin_config'].empty? ? {} : node['cookbook-openshift3']['openshift_master_admission_plugin_config']
-    when 5..6
+    when 5..9
       admission_default = node['cookbook-openshift3']['openshift_master_admission_plugin_config'].empty? ? { 'openshift.io/ImagePolicy' => { 'configuration' => { 'apiVersion' => 'v1', 'executionRules' => [{ 'matchImageAnnotations' => [{ 'key' => 'images.openshift.io/deny-execution', 'value' => 'true' }], 'name' => 'execution-denied', 'onResources' => [{ 'resource' => 'pods' }, { 'resource' => 'builds' }], 'reject' => true, 'skipOnResolutionFailure' => true }], 'kind' => 'ImagePolicyConfig' } } } : node['cookbook-openshift3']['openshift_master_admission_plugin_config'].to_hash
-    when 7..9
-      admission_default = node['cookbook-openshift3']['openshift_master_admission_plugin_config'].empty? ? { 'openshift.io/ImagePolicy' => { 'configuration' => { 'apiVersion' => 'v1', 'executionRules' => [{ 'matchImageAnnotations' => [{ 'key' => 'images.openshift.io/deny-execution', 'value' => 'true' }], 'name' => 'execution-denied', 'onResources' => [{ 'resource' => 'pods' }, { 'resource' => 'builds' }], 'reject' => true, 'skipOnResolutionFailure' => true }], 'kind' => 'ImagePolicyConfig' } }, 'PodPreset' => { 'configuration' => { 'kind' => 'DefaultAdmissionConfig', 'apiVersion' => 'v1', 'disable' => false } } } : node['cookbook-openshift3']['openshift_master_admission_plugin_config'].to_hash.merge('PodPreset' => { 'configuration' => { 'kind' => 'DefaultAdmissionConfig', 'apiVersion' => 'v1', 'disable' => false } })
     end
 
     if ::File.file?("#{node['cookbook-openshift3']['openshift_common_master_dir']}/master/master-config.yaml") && node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i == 6
