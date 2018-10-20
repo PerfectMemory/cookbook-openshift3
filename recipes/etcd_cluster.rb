@@ -13,6 +13,7 @@ certificate_server = server_info.certificate_server
 is_etcd_server = server_info.on_etcd_server?
 is_new_etcd_server = server_info.on_new_etcd_server?
 is_master_server = server_info.on_master_server?
+etcd_healthy = helper.checketcd_healthy?
 
 if node['cookbook-openshift3']['encrypted_file_password']['data_bag_name'] && node['cookbook-openshift3']['encrypted_file_password']['data_bag_item_name']
   secret_file = node['cookbook-openshift3']['encrypted_file_password']['secret_file'] || nil
@@ -23,6 +24,17 @@ end
 
 if is_etcd_server || is_new_etcd_server
   include_recipe 'cookbook-openshift3::etcd_packages'
+
+  include_recipe 'cookbook-openshift3::etcd_recovery' if ::File.file?(node['cookbook-openshift3']['adhoc_recovery_etcd_emergency'])
+  include_recipe 'cookbook-openshift3::etcd_recovery' if etcd_healthy && ::File.file?(node['cookbook-openshift3']['adhoc_recovery_etcd_member'])
+
+  file node['cookbook-openshift3']['adhoc_recovery_etcd_emergency'] do
+    action :delete
+  end
+
+  file node['cookbook-openshift3']['adhoc_recovery_etcd_member'] do
+    action :delete
+  end
 
   node['cookbook-openshift3']['enabled_firewall_rules_etcd'].each do |rule|
     iptables_rule rule do

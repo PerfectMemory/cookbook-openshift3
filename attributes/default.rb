@@ -259,7 +259,9 @@ default['cookbook-openshift3']['etcd_ca_dir'] = node['cookbook-openshift3']['etc
 default['cookbook-openshift3']['etcd_debug'] = false
 default['cookbook-openshift3']['etcd_generated_certs_dir'] = '/var/www/html/etcd/generated_certs'
 default['cookbook-openshift3']['etcd_generated_ca_dir'] = '/var/www/html/etcd'
+default['cookbook-openshift3']['etcd_certificate_dir'] = '/var/www/html/etcd_certificate_server'
 default['cookbook-openshift3']['etcd_generated_migrated_dir'] = '/var/www/html/etcd/migration'
+default['cookbook-openshift3']['etcd_generated_recovery_dir'] = '/var/www/html/etcd/recovery'
 default['cookbook-openshift3']['etcd_generated_scaleup_dir'] = '/var/www/html/etcd/scaleup'
 default['cookbook-openshift3']['etcd_generated_remove_dir'] = '/var/www/html/etcd/removal'
 default['cookbook-openshift3']['etcd_ca_cert'] = "#{node['cookbook-openshift3']['etcd_conf_dir']}/ca.crt"
@@ -278,6 +280,7 @@ default['cookbook-openshift3']['etcd_initial_cluster_state'] = 'new'
 default['cookbook-openshift3']['etcd_log_package_levels'] = ''
 default['cookbook-openshift3']['etcd_initial_cluster_token'] = 'etcd-cluster-1'
 default['cookbook-openshift3']['etcd_data_dir'] = '/var/lib/etcd'
+default['cookbook-openshift3']['etcd_snapshot_count'] = ''
 default['cookbook-openshift3']['etcd_default_days'] = '1825'
 
 default['cookbook-openshift3']['etcd_client_port'] = '2379'

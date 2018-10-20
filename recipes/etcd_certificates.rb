@@ -24,6 +24,14 @@ if is_certificate_server
     recursive true
   end
 
+  directory node['cookbook-openshift3']['etcd_certificate_dir'] do
+    owner 'root'
+    group 'root'
+    mode '0755'
+    action :create
+    recursive true
+  end
+
   %w[certs crl fragments].each do |etcd_ca_sub_dir|
     directory "#{node['cookbook-openshift3']['etcd_ca_dir']}/#{etcd_ca_sub_dir}" do
       owner 'root'
@@ -113,5 +121,29 @@ if is_certificate_server
       command "openssl enc -aes-256-cbc -in #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_master['fqdn']}.tgz -out #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_master['fqdn']}.tgz.enc -k '#{encrypted_file_password}' && chown -R apache:apache #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_master['fqdn']}.tgz.enc"
       creates "#{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_master['fqdn']}.tgz.enc"
     end
+  end
+
+  remote_file "#{node['cookbook-openshift3']['etcd_certificate_dir']}/ca.crt" do
+    owner 'root'
+    group 'root'
+    source "file://#{node['cookbook-openshift3']['etcd_ca_dir']}/ca.crt"
+    mode '0644'
+    sensitive true
+  end
+
+  remote_file "#{node['cookbook-openshift3']['etcd_certificate_dir']}/peer.key" do
+    owner 'root'
+    group 'root'
+    source "file://#{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_servers.first['fqdn']}/peer.key"
+    mode '0644'
+    sensitive true
+  end
+
+  remote_file "#{node['cookbook-openshift3']['etcd_certificate_dir']}/peer.crt" do
+    owner 'root'
+    group 'root'
+    source "file://#{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_servers.first['fqdn']}/peer.crt"
+    mode '0644'
+    sensitive true
   end
 end

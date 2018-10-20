@@ -18,3 +18,6 @@ default['cookbook-openshift3']['adhoc_reset_control_flag'] = '/to_be_reset_node'
 default['cookbook-openshift3']['adhoc_turn_off_openshift3_cookbook'] = '/to_be_replaced_turn_off_openshift3_cookbook'
 
 default['cookbook-openshift3']['adhoc_redeploy_registry_certificates_flag'] = '/to_be_replaced_registry_certificates'
+
+default['cookbook-openshift3']['adhoc_recovery_etcd_member'] = '/to_be_recoverd_etcd_member'
+default['cookbook-openshift3']['adhoc_recovery_etcd_emergency'] = '/to_be_recoverd_etcd_emergency'
