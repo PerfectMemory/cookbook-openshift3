@@ -123,13 +123,22 @@ if is_certificate_server
     end
   end
 
-  %w[ca.crt peer.key peer.crt].eacho do |file|
+  remote_file "#{node['cookbook-openshift3']['etcd_certificate_dir']}/ca.crt" do
+    owner 'root'
+    group 'root'
+    source "file://#{node['cookbook-openshift3']['etcd_ca_dir']}/ca.crt"
+    mode '0644'
+    sensitive true
+  end
+
+  %w[peer.key peer.crt].each do |file|
     remote_file "#{node['cookbook-openshift3']['etcd_certificate_dir']}/#{file}" do
       owner 'root'
       group 'root'
-      source "file://#{node['cookbook-openshift3']['etcd_ca_dir']}/#{file}"
+      source "file://#{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_servers.first['fqdn']}/#{file}"
       mode '0644'
       sensitive true
     end
   end
+
 end
