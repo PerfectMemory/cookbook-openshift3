@@ -26,11 +26,11 @@ if should_be_configured
 
   include_recipe 'cookbook-openshift3::ca_bundle_fix'
 
+  include_recipe 'cookbook-openshift3::services'
+
   if ::File.file?(node['cookbook-openshift3']['adhoc_reset_control_flag'])
     include_recipe 'cookbook-openshift3::adhoc_reset'
   end
-
-  include_recipe 'cookbook-openshift3::services'
 
   if node['cookbook-openshift3']['control_upgrade']
     begin
