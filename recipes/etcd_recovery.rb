@@ -56,7 +56,7 @@ if is_certificate_server && !etcd_healthy
     end
   end
 
-  file node['cookbook-openshift3']['adhoc_recovery_etcd_member'] do
+  file node['cookbook-openshift3']['adhoc_recovery_etcd_certificate_server'] do
     action :delete
   end
 
