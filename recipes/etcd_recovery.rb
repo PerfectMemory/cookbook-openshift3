@@ -12,8 +12,8 @@ is_certificate_server = server_info.on_certificate_server?
 etcd_servers = server_info.etcd_servers
 etcd_healthy = helper.checketcd_healthy?
 
-if is_certificate_server && etcd_healthy && ::File.file?(node['cookbook-openshift3']['adhoc_recovery_etcd_member'])
-  file node['cookbook-openshift3']['adhoc_recovery_etcd_member'] do
+if is_certificate_server && etcd_healthy && ::File.file?(node['cookbook-openshift3']['adhoc_recovery_etcd_certificate_server'])
+  file node['cookbook-openshift3']['adhoc_recovery_etcd_certificate_server'] do
     action :delete
   end
 end
@@ -35,9 +35,10 @@ if is_certificate_server && !etcd_healthy
     end
 
     execute "Add #{etcd['fqdn']} to the cluster" do
-      command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt --endpoints #{etcd_servers.map { |srv| "https://#{srv['ipaddress']}:2379" }.join(',')} member add #{etcd['fqdn']} https://#{etcd['ipaddress']}:2380 | grep ^ETCD | tr --delete '\"' | tee #{node['cookbook-openshift3']['etcd_generated_recovery_dir']}/etcd-#{etcd['fqdn']}"
+      command "/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt --endpoints #{etcd_servers.map { |srv| "https://#{srv['ipaddress']}:2379" }.join(',')} member add #{etcd['fqdn']} https://#{etcd['ipaddress']}:2380 | grep ^ETCD | tr --delete '\"' | tee #{node['cookbook-openshift3']['etcd_generated_recovery_dir']}/etcd-#{etcd['fqdn']} && chmod 644 #{node['cookbook-openshift3']['etcd_generated_recovery_dir']}/etcd-#{etcd['fqdn']}"
       creates "#{node['cookbook-openshift3']['etcd_generated_recovery_dir']}/etcd-#{etcd['fqdn']}"
       notifies :run, "execute[Check #{etcd['fqdn']} has successfully registered]", :immediately
+      notifies :start, 'service[httpd]', :before
       not_if { Mixlib::ShellOut.new("/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.crt --key-file #{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{first_etcd['fqdn']}/peer.key --ca-file #{node['cookbook-openshift3']['etcd_generated_ca_dir']}/ca.crt --endpoints #{etcd_servers.map { |srv| "https://#{srv['ipaddress']}:2379" }.join(',')} member list").run_command.stdout.strip.include?(etcd['fqdn']) }
     end
 

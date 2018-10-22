@@ -21,7 +21,7 @@ if is_certificate_server
 
   include_recipe 'cookbook-openshift3::etcd_packages'
   include_recipe 'cookbook-openshift3::etcd_certificates' if node['cookbook-openshift3']['openshift_HA']
-  include_recipe 'cookbook-openshift3::etcd_recovery' if ::File.file?(node['cookbook-openshift3']['adhoc_recovery_etcd_member'])
+  include_recipe 'cookbook-openshift3::etcd_recovery' if ::File.file?(node['cookbook-openshift3']['adhoc_recovery_etcd_certificate_server'])
   include_recipe 'cookbook-openshift3::etcd_scaleup' unless new_etcd_servers.empty?
   include_recipe 'cookbook-openshift3::etcd_removal' unless remove_etcd_servers.empty?
   include_recipe 'cookbook-openshift3::master_cluster_ca'

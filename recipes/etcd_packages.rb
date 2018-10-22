@@ -40,9 +40,9 @@ if is_certificate_server
       ose_major_version: node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
     )
   end
-else
-  cookbook_file '/etc/profile.d/etcdctl.sh' do
-    source 'etcdctl.sh'
-    mode '0755'
-  end
+end
+
+cookbook_file '/etc/profile.d/etcdctl.sh' do
+  source 'etcdctl.sh'
+  mode '0755'
 end
