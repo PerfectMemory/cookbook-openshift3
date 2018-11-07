@@ -63,7 +63,7 @@ service 'Restart Node' do
   retry_delay 5
 end
 
-systemd_unit "#{node['cookbook-openshift3']['openshift_service_type']}-node" do
+service "#{node['cookbook-openshift3']['openshift_service_type']}-node" do
   action :nothing
 end
 

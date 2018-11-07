@@ -280,7 +280,7 @@ if is_node_server
       kubelet_args: node['cookbook-openshift3']['openshift_node_kubelet_args_default'].merge(node['cookbook-openshift3']['openshift_node_kubelet_args_custom'])
     )
     notifies :run, 'execute[daemon-reload]', :immediately
-    notifies :enable, "systemd_unit[#{node['cookbook-openshift3']['openshift_service_type']}-node]", :immediately
+    notifies :enable, "service[#{node['cookbook-openshift3']['openshift_service_type']}-node]", :immediately
     notifies :restart, 'service[Restart Node]', :immediately
   end
 

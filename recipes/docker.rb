@@ -15,7 +15,7 @@ if is_node_server || node['cookbook-openshift3']['deploy_containerized']
     options node['cookbook-openshift3']['docker_yum_options'] unless node['cookbook-openshift3']['docker_yum_options'].nil?
     notifies :restart, 'service[docker]', :immediately if node['cookbook-openshift3']['upgrade']
     only_if do
-      ::Mixlib::ShellOut.new('rpm -q docker').run_command.error? || node['cookbook-openshift3']['upgrade']
+      ::Mixlib::ShellOut.new('rpm -q docker').run_command.error? || node['cookbook-openshift3']['upgrade'] || ::File.file?(node['cookbook-openshift3']['adhoc_reset_control_flag'])
     end
   end
 

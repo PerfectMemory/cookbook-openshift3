@@ -245,7 +245,7 @@ execute 'Activate services for Master CONTROLLERS on all masters' do
   only_if { first_master['fqdn'] != node['fqdn'] }
 end
 
-systemd_unit "#{node['cookbook-openshift3']['openshift_service_type']}-master" do
+service "#{node['cookbook-openshift3']['openshift_service_type']}-master" do
   action %i[disable mask]
 end
 

@@ -15,7 +15,7 @@ action :delete do
     helper = OpenShiftHelper::NodeHelper.new(node)
 
     %W[#{node['cookbook-openshift3']['openshift_service_type']}-node openvswitch #{node['cookbook-openshift3']['openshift_service_type']}-master #{node['cookbook-openshift3']['openshift_service_type']}-master-api #{node['cookbook-openshift3']['openshift_service_type']}-master-controllers etcd etcd_container haproxy docker].each do |svc|
-      systemd_unit svc do
+      service svc do
         action %i[stop disable]
         ignore_failure true
       end
@@ -82,7 +82,7 @@ action :delete do
 
     Mixlib::ShellOut.new('systemctl daemon-reload').run_command
 
-    systemd_unit 'iptables' do
+    service 'iptables' do
       action :restart
     end
 
