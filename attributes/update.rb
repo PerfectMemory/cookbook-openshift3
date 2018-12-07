@@ -1,5 +1,6 @@
 default['cookbook-openshift3']['control_rollback_flag'] = '/to_be_rollback'
 default['cookbook-openshift3']['asynchronous_upgrade'] = false
+default['cookbook-openshift3']['version_38_pkg'] = '3.8.0-1.el7.git.0.dd1558c'
 
 if node['cookbook-openshift3']['control_upgrade']
   default['cookbook-openshift3']['control_upgrade_version'] = ''

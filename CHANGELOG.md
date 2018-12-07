@@ -1,7 +1,7 @@
 # Openshift 3 Cookbook CHANGELOG
 This file is used to list changes made in each version of the Openshift 3 cookbook.
 
-## v2.1.1
+## v2.1.1-2
 ### Improvement
 - Add possibility to configure any option supported by docker-storage-setup 
 - Improve installation pkgs for master and node so as to avoid unwanted automatic upgrades whilst enforcing versions

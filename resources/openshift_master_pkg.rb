@@ -13,6 +13,7 @@ action :install do
   docker_version = new_resource.docker_version.nil? ? node['cookbook-openshift3']['openshift_docker_image_version'] : new_resource.docker_version
   ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
   pkg_master_to_install = is_node_server ? node['cookbook-openshift3']['pkg_master'] | node['cookbook-openshift3']['pkg_node'] : node['cookbook-openshift3']['pkg_master']
+  version = new_resource.version.nil? ? node['cookbook-openshift3']['ose_version'] : new_resource.version
 
   if node['cookbook-openshift3']['deploy_containerized']
     docker_image node['cookbook-openshift3']['openshift_docker_master_image'] do
@@ -57,10 +58,10 @@ action :install do
   end
 
   if node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i < 10
-    yum_package pkg_master_to_install do
+    yum_package pkg_master_to_install.reject { |x| x == "tuned-profiles-#{node['cookbook-openshift3']['openshift_service_type']}-node" && node['cookbook-openshift3']['control_upgrade_version'].to_i >= 39 } do
       action :install
-      version Array.new(pkg_master_to_install.size, node['cookbook-openshift3']['ose_version']) unless node['cookbook-openshift3']['ose_version'].nil?
-      options node['cookbook-openshift3']['openshift_yum_options'] unless node['cookbook-openshift3']['openshift_yum_options'].nil?
+      version Array.new(pkg_master_to_install.size, version) unless version.nil?
+      options new_resource.options.nil? ? node['cookbook-openshift3']['openshift_yum_options'] : new_resource.options
       notifies :run, 'execute[daemon-reload]', :immediately
       not_if { node['cookbook-openshift3']['deploy_containerized'] || (is_certificate_server && node['fqdn'] != first_master['fqdn']) }
       retries 3
@@ -68,7 +69,7 @@ action :install do
 
     yum_package "#{node['cookbook-openshift3']['openshift_service_type']}-clients" do
       action :install
-      version node['cookbook-openshift3']['ose_version'] unless node['cookbook-openshift3']['ose_version'].nil?
+      version version unless version.nil?
       options new_resource.options.nil? ? node['cookbook-openshift3']['openshift_yum_options'] : new_resource.options
       not_if { node['cookbook-openshift3']['deploy_containerized'] || (is_certificate_server && node['fqdn'] == first_master['fqdn']) }
       retries 3
