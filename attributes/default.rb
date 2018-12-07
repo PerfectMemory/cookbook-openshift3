@@ -83,6 +83,9 @@ default['cookbook-openshift3']['enabled_firewall_rules_etcd'] = %w[firewall_etcd
 default['cookbook-openshift3']['enabled_firewall_rules_lb'] = %w[firewall_lb]
 default['cookbook-openshift3']['openshift_service_type'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'atomic-openshift' : 'origin'
 default['cookbook-openshift3']['registry_persistent_volume'] = ''
+default['cookbook-openshift3']['pkg_master'] = %W[#{node['cookbook-openshift3']['openshift_service_type']}-master #{node['cookbook-openshift3']['openshift_service_type']}-clients #{node['cookbook-openshift3']['openshift_service_type']}]
+default['cookbook-openshift3']['pkg_node'] = %W[#{node['cookbook-openshift3']['openshift_service_type']}-node tuned-profiles-#{node['cookbook-openshift3']['openshift_service_type']}-node #{node['cookbook-openshift3']['openshift_service_type']}-sdn-ovs #{node['cookbook-openshift3']['openshift_service_type']}-clients #{node['cookbook-openshift3']['openshift_service_type']}]
+
 default['cookbook-openshift3']['yum_repositories'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? %w[] : originrepos.find_all { |x| x['name'] =~ /origin#{node['cookbook-openshift3']['ose_major_version'].tr('.', '')}/ }
 default['cookbook-openshift3']['openshift_http_proxy'] = ''
 default['cookbook-openshift3']['openshift_https_proxy'] = ''

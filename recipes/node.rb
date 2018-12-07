@@ -9,6 +9,7 @@ node_servers = server_info.node_servers
 certificate_server = server_info.certificate_server
 is_node_server = server_info.on_node_server?
 docker_version = node['cookbook-openshift3']['openshift_docker_image_version']
+pkg_node_to_install = node['cookbook-openshift3']['pkg_node']
 
 ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
 path_certificate = node['cookbook-openshift3']['use_wildcard_nodes'] ? 'wildcard_nodes.tgz.enc' : "#{node['fqdn']}.tgz.enc"
@@ -103,24 +104,15 @@ if is_node_server
     notifies :restart, 'service[Restart Node]', :immediately unless node['cookbook-openshift3']['upgrade'] || Mixlib::ShellOut.new("systemctl is-enabled #{node['cookbook-openshift3']['openshift_service_type']}-node").run_command.error?
   end
 
-  package "#{node['cookbook-openshift3']['openshift_service_type']}-node" do
+  yum_package pkg_node_to_install do
     action :install
-    version node['cookbook-openshift3']['ose_version'] unless node['cookbook-openshift3']['ose_version'].nil?
+    version Array.new(pkg_node_to_install.size, node['cookbook-openshift3']['ose_version']) unless node['cookbook-openshift3']['ose_version'].nil?
     options node['cookbook-openshift3']['openshift_yum_options'] unless node['cookbook-openshift3']['openshift_yum_options'].nil?
     not_if { node['cookbook-openshift3']['deploy_containerized'] }
     retries 3
   end
 
-  package "#{node['cookbook-openshift3']['openshift_service_type']}-sdn-ovs" do
-    action :install
-    version node['cookbook-openshift3']['ose_version'] unless node['cookbook-openshift3']['ose_version'].nil?
-    options node['cookbook-openshift3']['openshift_yum_options'] unless node['cookbook-openshift3']['openshift_yum_options'].nil?
-    only_if { node['cookbook-openshift3']['openshift_common_use_openshift_sdn'] == true }
-    not_if { node['cookbook-openshift3']['deploy_containerized'] }
-    retries 3
-  end
-
-  package 'conntrack-tools' do
+  yum_package 'conntrack-tools' do
     action :install
     not_if { node['cookbook-openshift3']['deploy_containerized'] }
     retries 3
