@@ -58,7 +58,7 @@ action :install do
   end
 
   if node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i < 10
-    yum_package pkg_master_to_install.reject { |x| x == "tuned-profiles-#{node['cookbook-openshift3']['openshift_service_type']}-node" && node['cookbook-openshift3']['control_upgrade_version'].to_i >= 39 } do
+    yum_package pkg_master_to_install.reject { |x| x == "tuned-profiles-#{node['cookbook-openshift3']['openshift_service_type']}-node" && (node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 9 || node['cookbook-openshift3']['control_upgrade_version'].to_i >= 39) } do
       action :install
       version Array.new(pkg_master_to_install.size, version) unless version.nil?
       options new_resource.options.nil? ? node['cookbook-openshift3']['openshift_yum_options'] : new_resource.options
