@@ -12,7 +12,6 @@ docker_version = node['cookbook-openshift3']['openshift_docker_image_version']
 pkg_node_to_install = node['cookbook-openshift3']['pkg_node']
 
 ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
-version = node['cookbook-openshift3']['control_upgrade'] ? node['cookbook-openshift3']['control_upgrade_version'] : ose_major_version
 path_certificate = node['cookbook-openshift3']['use_wildcard_nodes'] ? 'wildcard_nodes.tgz.enc' : "#{node['fqdn']}.tgz.enc"
 
 if node['cookbook-openshift3']['encrypted_file_password']['data_bag_name'] && node['cookbook-openshift3']['encrypted_file_password']['data_bag_item_name']
@@ -105,7 +104,7 @@ if is_node_server
     notifies :restart, 'service[Restart Node]', :immediately unless node['cookbook-openshift3']['upgrade'] || Mixlib::ShellOut.new("systemctl is-enabled #{node['cookbook-openshift3']['openshift_service_type']}-node").run_command.error?
   end
 
-  yum_package pkg_node_to_install.reject { |x| x == "tuned-profiles-#{node['cookbook-openshift3']['openshift_service_type']}-node" && version.to_i >= 39 } do
+  yum_package pkg_node_to_install.reject { |x| x == "tuned-profiles-#{node['cookbook-openshift3']['openshift_service_type']}-node" && (node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 9 || node['cookbook-openshift3']['control_upgrade_version'].to_i >= 39) } do
     action :install
     version Array.new(pkg_node_to_install.size, node['cookbook-openshift3']['ose_version']) unless node['cookbook-openshift3']['ose_version'].nil?
     options node['cookbook-openshift3']['openshift_yum_options'] unless node['cookbook-openshift3']['openshift_yum_options'].nil?
