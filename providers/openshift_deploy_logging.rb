@@ -568,11 +568,15 @@ action :create do
     end
 
     # Retrieve the list of Fluentd nodes
-    whitelisted_fluentd_hosts = Array(node['cookbook-openshift3']['openshift_logging_fluentd_hosts'])
+    whitelisted_fluentd_hosts = Array(node['cookbook-openshift3']['openshift_logging_fluentd_hosts']).dup
     if whitelisted_fluentd_hosts == %w[--all]
       whitelisted_fluentd_hosts = OpenShiftHelper::NodeHelper.new(node).node_servers.map do |server_node|
         server_node['fqdn']
       end
+    else
+      # due to how chef merges Array attributes, the `--all` value may still be present in #{whitelisted_fluentd_hosts};
+      # this may happen especially on the first run after setting openshift_logging_fluentd_hosts to non-default value.
+      whitelisted_fluentd_hosts.delete('--all')
     end
 
     # Set Fluentd labels on whitelisted nodes
