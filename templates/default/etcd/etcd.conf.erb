@@ -1,9 +1,13 @@
 ETCD_NAME=<%= node['fqdn'] %>
 ETCD_LISTEN_PEER_URLS=https://<%= @etcd_servers.find{ |etcd| etcd['fqdn'] == node['fqdn']}['ipaddress'] %>:<%= node['cookbook-openshift3']['etcd_peer_port'] %>
 ETCD_DATA_DIR=<%= node['cookbook-openshift3']['etcd_data_dir'] %>
+<%- if node['cookbook-openshift3']['etcd_snapshot_count'].empty? -%>
 #ETCD_SNAPSHOT_COUNTER=10000
-ETCD_HEARTBEAT_INTERVAL=500
-ETCD_ELECTION_TIMEOUT=2500
+<%- else -%>
+ETCD_SNAPSHOT_COUNT=<%= node['cookbook-openshift3']['etcd_snapshot_count'] %>
+<%- end -%>
+ETCD_HEARTBEAT_INTERVAL=<%= node['cookbook-openshift3']['etcd_heartbeat_interval'] %>
+ETCD_ELECTION_TIMEOUT=<%= node['cookbook-openshift3']['etcd_election_timeout'] %>
 ETCD_LISTEN_CLIENT_URLS=https://<%= @etcd_servers.find{ |etcd| etcd['fqdn'] == node['fqdn']}['ipaddress'] %>:<%= node['cookbook-openshift3']['etcd_client_port'] %>
 #ETCD_MAX_SNAPSHOTS=5
 #ETCD_MAX_WALS=5

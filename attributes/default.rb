@@ -288,6 +288,8 @@ default['cookbook-openshift3']['etcd_default_days'] = '1825'
 
 default['cookbook-openshift3']['etcd_client_port'] = '2379'
 default['cookbook-openshift3']['etcd_peer_port'] = '2380'
+default['cookbook-openshift3']['etcd_heartbeat_interval'] = '500'
+default['cookbook-openshift3']['etcd_election_timeout'] = '2500'
 
 default['cookbook-openshift3']['docker_dns_search_option'] = %w[]
 
