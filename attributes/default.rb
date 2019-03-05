@@ -31,6 +31,9 @@ default['cookbook-openshift3']['lb_servers'] = []
 default['cookbook-openshift3']['certificate_server'] = {}
 default['cookbook-openshift3']['openshift_hosted_registry_insecure'] = false
 default['cookbook-openshift3']['openshift_yum_options'] = ''
+default['cookbook-openshift3']['skip_migration_storage'] = false
+default['cookbook-openshift3']['customised_storage'] = false
+default['cookbook-openshift3']['customised_resources'] = '*'
 
 if node['cookbook-openshift3']['openshift_HA'] || node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10
   default['cookbook-openshift3']['openshift_common_api_hostname'] = node['cookbook-openshift3']['openshift_cluster_name']

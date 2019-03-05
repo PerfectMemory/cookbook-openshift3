@@ -14,8 +14,6 @@ is_remove_etcd_server = server_info.on_remove_etcd_server?
 
 include_recipe 'cookbook-openshift3::packages'
 include_recipe 'cookbook-openshift3::docker'
-include_recipe 'iptables::default'
-include_recipe 'selinux_policy::default'
 
 service 'firewalld' do
   action %i[stop disable]
