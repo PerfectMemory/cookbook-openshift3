@@ -20,7 +20,6 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
   node.force_override['yum']['main']['exclude'] = node['cookbook-openshift3']['custom_pkgs_excluder'] unless node['cookbook-openshift3']['custom_pkgs_excluder'].nil?
 
   server_info = OpenShiftHelper::NodeHelper.new(node)
-  first_etcd = server_info.first_etcd
   is_etcd_server = server_info.on_etcd_server?
   is_master_server = server_info.on_master_server?
   is_node_server = server_info.on_node_server?
@@ -30,7 +29,7 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
   end
 
   if is_master_server
-    return unless ::Mixlib::ShellOut.new("/usr/bin/etcdctl --cert-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.crt --key-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-client.key --ca-file #{node['cookbook-openshift3']['openshift_master_config_dir']}/master.etcd-ca.crt -C https://#{first_etcd['ipaddress']}:2379 ls /migration/#{node['cookbook-openshift3']['control_upgrade_version']}/#{node['fqdn']}").run_command.error?
+    return unless server_info.check_master_upgrade?(server_info.first_etcd, node['cookbook-openshift3']['control_upgrade_version'])
   end
 
   include_recipe 'yum::default'
@@ -50,31 +49,19 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
       level :info
     end
 
-    execute 'Generate etcd backup before upgrade' do
-      command "etcdctl backup --data-dir=#{node['cookbook-openshift3']['etcd_data_dir']} --backup-dir=#{node['cookbook-openshift3']['etcd_data_dir']}-pre-upgrade39"
-      not_if { ::File.directory?("#{node['cookbook-openshift3']['etcd_data_dir']}-pre-upgrade39") }
-      notifies :run, 'execute[Copy etcd v3 data store (PRE)]', :immediately
-    end
-
-    execute 'Copy etcd v3 data store (PRE)' do
-      command "cp -a #{node['cookbook-openshift3']['etcd_data_dir']}/member/snap/db #{node['cookbook-openshift3']['etcd_data_dir']}-pre-upgrade39/member/snap/"
-      only_if { ::File.file?("#{node['cookbook-openshift3']['etcd_data_dir']}/member/snap/db") }
-      action :nothing
+    openshift_upgrade 'Generate etcd backup before upgrade' do
+      action :create_backup
+      etcd_action 'pre'
+      target_version node['cookbook-openshift3']['control_upgrade_version']
     end
 
     include_recipe 'cookbook-openshift3'
     include_recipe 'cookbook-openshift3::etcd_cluster'
 
-    execute 'Generate etcd backup after upgrade' do
-      command "etcdctl backup --data-dir=#{node['cookbook-openshift3']['etcd_data_dir']} --backup-dir=#{node['cookbook-openshift3']['etcd_data_dir']}-post-upgrade39"
-      not_if { ::File.directory?("#{node['cookbook-openshift3']['etcd_data_dir']}-post-upgrade39") }
-      notifies :run, 'execute[Copy etcd v3 data store (POST)]', :immediately
-    end
-
-    execute 'Copy etcd v3 data store (POST)' do
-      command "cp -a #{node['cookbook-openshift3']['etcd_data_dir']}/member/snap/db #{node['cookbook-openshift3']['etcd_data_dir']}-post-upgrade39/member/snap/"
-      only_if { ::File.file?("#{node['cookbook-openshift3']['etcd_data_dir']}/member/snap/db") }
-      action :nothing
+    openshift_upgrade 'Generate etcd backup after upgrade' do
+      action :create_backup
+      etcd_action 'post'
+      target_version node['cookbook-openshift3']['control_upgrade_version']
     end
 
     file node['cookbook-openshift3']['control_upgrade_flag'] do

@@ -106,5 +106,17 @@ if is_master_server
   end
 end
 
-include_recipe 'cookbook-openshift3::upgrade_managed_hosted' if is_first_master
+if is_first_master
+  include_recipe 'cookbook-openshift3::upgrade_managed_hosted' if is_first_master
+
+  openshift_upgrade "Mark upgrade complete for #{node['fqdn']}" do
+    action :set_mark_upgrade
+    target_version node['cookbook-openshift3']['control_upgrade_version']
+  end
+
+  log 'Post Upgrade for MASTERS [COMPLETED]' do
+    level :info
+  end
+end
+
 include_recipe 'cookbook-openshift3::upgrade_node39' if is_node_server
