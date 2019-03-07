@@ -37,7 +37,7 @@ if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
   include_recipe 'cookbook-openshift3::etcd_packages'
   include_recipe 'cookbook-openshift3::excluder'
 
-  include_recipe 'cookbook-openshift3::wire_aggregator_certificates' if ose_major_version.split('.')[1].to_i == 7 && node['cookbook-openshift3']['upgrade']
+  include_recipe 'cookbook-openshift3::wire_aggregator_certificates' if node['cookbook-openshift3']['upgrade_ose_version'].split('.')[1].to_i == 7 && node['cookbook-openshift3']['upgrade']
 
   log 'Upgrade for CERTIFICATE SERVER [COMPLETED]' do
     level :info
