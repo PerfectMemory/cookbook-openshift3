@@ -75,6 +75,12 @@ if is_master_server
     notifies :restart, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-controllers]", :immediately if node['cookbook-openshift3']['openshift_HA']
   end
 
+  openshift_upgrade "Mark upgrade complete for #{node['fqdn']}" do
+    action :set_mark_upgrade
+    target_version node['cookbook-openshift3']['control_upgrade_version']
+    not_if { is_first_master }
+  end
+
   log 'Upgrade for MASTERS [COMPLETED]' do
     level :info
   end

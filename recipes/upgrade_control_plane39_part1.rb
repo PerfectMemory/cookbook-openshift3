@@ -101,6 +101,12 @@ if is_master_server
     notifies :restart, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-controllers]", :immediately
   end
 
+  openshift_upgrade "Mark upgrade complete for #{node['fqdn']}" do
+    action :set_mark_upgrade
+    target_version node['cookbook-openshift3']['control_upgrade_version']
+    not_if { is_first_master }
+  end
+
   log 'Reconcile Cluster Roles & Cluster Role Bindings [COMPLETED] (3.9)' do
     level :info
   end
