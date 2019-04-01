@@ -18,7 +18,7 @@ if is_certificate_server
     end
   end
 
-  openshift_master_pkg 'Install OpenShift Master Packages for Certificate Server'
+  openshift_master_pkg 'Install OpenShift Master Packages for Certificate Server' unless ::File.file?('/tmp/skip-pkgs')
 
   include_recipe 'cookbook-openshift3::etcd_packages'
   include_recipe 'cookbook-openshift3::etcd_certificates' if node['cookbook-openshift3']['openshift_HA']

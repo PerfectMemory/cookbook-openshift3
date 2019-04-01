@@ -36,11 +36,11 @@ module OpenShiftHelper
     end
 
     def first_master
-      server_method? ? Chef::Search::Query.new.search(:node, "role:#{node['cookbook-openshift3']['openshift_cluster_duty_discovery_id']}_openshift_first_master_duty")[0][0] : master_servers.first # ~FC001, ~FC019
+      master_servers.first
     end
 
     def first_etcd
-      server_method? ? Chef::Search::Query.new.search(:node, "role:#{node['cookbook-openshift3']['openshift_cluster_duty_discovery_id']}_openshift_first_etcd_duty")[0][0] : etcd_servers.first # ~FC001, ~FC019
+      etcd_servers.first
     end
 
     def certificate_server
