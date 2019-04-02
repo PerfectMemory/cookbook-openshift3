@@ -66,6 +66,7 @@ package 'deltarpm' do
 end
 
 yum_package node['cookbook-openshift3']['core_packages'] do
+  options node['cookbook-openshift3']['docker_yum_options'] unless node['cookbook-openshift3']['docker_yum_options'].nil?
   only_if { is_master_server || is_node_server }
 end
 

@@ -12,16 +12,16 @@ Chef::Log.error("Upgrade will be skipped. Could not find the flag: #{node['cookb
 
 if ::File.file?(node['cookbook-openshift3']['control_upgrade_flag'])
 
-  node.force_override['cookbook-openshift3']['upgrade'] = true
-  node.force_override['cookbook-openshift3']['ose_major_version'] = node['cookbook-openshift3']['upgrade_ose_major_version']
-  node.force_override['cookbook-openshift3']['ose_version'] = node['cookbook-openshift3']['upgrade_ose_version']
-  node.force_override['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['upgrade_openshift_docker_image_version']
+  node.force_override['cookbook-openshift3']['upgrade'] = true # ~FC019
+  node.force_override['cookbook-openshift3']['ose_major_version'] = node['cookbook-openshift3']['upgrade_ose_major_version'] # ~FC019
+  node.force_override['cookbook-openshift3']['ose_version'] = node['cookbook-openshift3']['upgrade_ose_version'] # ~FC019
+  node.force_override['cookbook-openshift3']['openshift_docker_image_version'] = node['cookbook-openshift3']['upgrade_openshift_docker_image_version'] # ~FC019
 
   server_info = OpenShiftHelper::NodeHelper.new(node)
   is_node_server = server_info.on_node_server?
 
   if defined? node['cookbook-openshift3']['upgrade_repos']
-    node.force_override['cookbook-openshift3']['yum_repositories'] = node['cookbook-openshift3']['upgrade_repos']
+    node.force_override['cookbook-openshift3']['yum_repositories'] = node['cookbook-openshift3']['upgrade_repos'] # ~FC019
   end
 
   include_recipe 'yum::default'
