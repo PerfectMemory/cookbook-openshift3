@@ -59,8 +59,8 @@ service 'Restart Node' do
   service_name "#{node['cookbook-openshift3']['openshift_service_type']}-node"
   action :nothing
   only_if "systemctl is-enabled #{node['cookbook-openshift3']['openshift_service_type']}-node"
-  retries 4
-  retry_delay 5
+  retries 6
+  retry_delay 10
 end
 
 service "#{node['cookbook-openshift3']['openshift_service_type']}-node" do

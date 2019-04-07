@@ -25,3 +25,4 @@ default['cookbook-openshift3']['openshift_master_identity_provider']['RequestHea
 default['cookbook-openshift3']['openshift_master_htpasswd'] = "#{node['cookbook-openshift3']['openshift_common_master_dir']}/openshift-passwd"
 
 default['cookbook-openshift3']['openshift_master_htpasswd_users'] = []
+default['cookbook-openshift3']['openshift_master_identity_ldap_filter'] = '(objectClass=*)'
