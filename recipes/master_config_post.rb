@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2015 The Authors, All Rights Reserved.
 
-server_info = OpenShiftHelper::NodeHelper.new(node)
+server_info = helper = OpenShiftHelper::NodeHelper.new(node)
 master_servers = server_info.master_servers
 node_servers = server_info.node_servers
 ose_major_version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['cookbook-openshift3']['openshift_docker_image_version'] : node['cookbook-openshift3']['ose_major_version']
@@ -64,6 +64,12 @@ service_accounts.each do |serviceaccount|
   end
 end
 
+execute 'Set default selector for openshift-infra' do
+  command "#{node['cookbook-openshift3']['openshift_common_client_binary']} annotate namespace openshift-infra openshift.io/node-selector=\"#{node['cookbook-openshift3']['openshift-infra-selector']}\" --overwrite --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig --server #{node['cookbook-openshift3']['openshift_master_loopback_api_url']}"
+  cwd node['cookbook-openshift3']['openshift_master_config_dir']
+  only_if { node['cookbook-openshift3']['set_openshift-infra_selector'] }
+end
+
 execute 'Import Openshift Hosted Examples' do
   command "#{node['cookbook-openshift3']['openshift_common_client_binary']} apply -f #{node['cookbook-openshift3']['openshift_common_hosted_base']} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig -n openshift --server #{node['cookbook-openshift3']['openshift_master_loopback_api_url']}"
   cwd node['cookbook-openshift3']['openshift_master_config_dir']
@@ -112,6 +118,7 @@ end
 
 node_servers.reject { |h| h.key?('skip_run') }.each do |nodes|
   next unless node['cookbook-openshift3']['openshift_cluster_duty_discovery_id'].nil?
+  next if helper.part_of_master?(nodes['fqdn']) && helper.part_of_node?(nodes['fqdn']) && ose_major_version.split('.')[1].to_i >= 9
   execute "Set schedulability for Master node : #{nodes['fqdn']}" do
     command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} manage-node #{nodes['fqdn']} --schedulable=${schedulability} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig --server #{node['cookbook-openshift3']['openshift_master_loopback_api_url']}"
     environment(
@@ -119,7 +126,7 @@ node_servers.reject { |h| h.key?('skip_run') }.each do |nodes|
     )
     cwd node['cookbook-openshift3']['openshift_master_config_dir']
     only_if do
-      master_servers.find { |server_node| server_node['fqdn'] == nodes['fqdn'] } &&
+      helper.part_of_master?(nodes['fqdn']) &&
         !Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node --server #{node['cookbook-openshift3']['openshift_master_loopback_api_url']} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | grep #{nodes['fqdn']}").run_command.error?
     end
   end
@@ -131,7 +138,7 @@ node_servers.reject { |h| h.key?('skip_run') }.each do |nodes|
     )
     cwd node['cookbook-openshift3']['openshift_master_config_dir']
     not_if do
-      master_servers.find { |server_node| server_node['fqdn'] == nodes['fqdn'] } ||
+      helper.part_of_master?(nodes['fqdn']) ||
         Mixlib::ShellOut.new("#{node['cookbook-openshift3']['openshift_common_client_binary']} get node --server #{node['cookbook-openshift3']['openshift_master_loopback_api_url']} --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig | grep #{nodes['fqdn']}").run_command.error?
     end
   end
@@ -164,6 +171,7 @@ if ose_major_version.split('.')[1].to_i >= 9
   end
 
   node_servers.each do |node_server|
+    next if helper.part_of_master?(node_server['fqdn']) && helper.part_of_node?(node_server['fqdn'])
     execute "Set \"compute\" label for node : #{node_server['fqdn']}" do
       command "#{node['cookbook-openshift3']['openshift_common_client_binary']} label node #{node_server['fqdn']} ${labels} --overwrite --config=#{node['cookbook-openshift3']['openshift_master_config_dir']}/admin.kubeconfig --server #{node['cookbook-openshift3']['openshift_master_loopback_api_url']}"
       environment(

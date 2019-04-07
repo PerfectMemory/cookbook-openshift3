@@ -77,6 +77,8 @@ action :delete do
       block do
         helper.remove_dir('/etc/iptables.d/firewall_*')
         helper.remove_dir('/var/lib/origin/*')
+        helper.remove_dir('/var/lib/docker/*')
+        helper.remove_dir("#{Chef::Config['file_cache_path']}/*")
       end
     end
 

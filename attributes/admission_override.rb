@@ -14,6 +14,7 @@ default['cookbook-openshift3']['openshift_buildoverrides_force_pull'] = ''
 default['cookbook-openshift3']['openshift_buildoverrides_image_labels'] = %w[]
 default['cookbook-openshift3']['openshift_buildoverrides_nodeselectors'] = {}
 default['cookbook-openshift3']['openshift_buildoverrides_annotations'] = {}
+default['cookbook-openshift3']['openshift_buildoverrides_tolerations'] = %w[]
 default['cookbook-openshift3']['openshift_clusterresourceoverrides_memorylimit_percent'] = ''
 default['cookbook-openshift3']['openshift_clusterresourceoverrides_cpulimit_percent'] = ''
 default['cookbook-openshift3']['openshift_clusterresourceoverrides_limitcputomem_percent'] = ''

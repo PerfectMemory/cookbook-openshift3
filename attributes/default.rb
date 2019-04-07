@@ -34,6 +34,8 @@ default['cookbook-openshift3']['openshift_yum_options'] = ''
 default['cookbook-openshift3']['skip_migration_storage'] = false
 default['cookbook-openshift3']['customised_storage'] = false
 default['cookbook-openshift3']['customised_resources'] = '*'
+default['cookbook-openshift3']['set_openshift-infra_selector'] = false
+default['cookbook-openshift3']['openshift-infra-selector'] = 'region=infra'
 
 if node['cookbook-openshift3']['openshift_HA'] || node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10
   default['cookbook-openshift3']['openshift_common_api_hostname'] = node['cookbook-openshift3']['openshift_cluster_name']
@@ -211,6 +213,7 @@ default['cookbook-openshift3']['openshift_node_sdn_mtu_sdn'] = '1450'
 default['cookbook-openshift3']['openshift_node_disable_swap_on_host'] = true
 # Deprecated options (Use openshift_node_kubelet_args_custom instead)
 default['cookbook-openshift3']['openshift_node_max_pod'] = ''
+default['cookbook-openshift3']['openshift_node_user_data'] = false
 default['cookbook-openshift3']['openshift_node_image_config_latest'] = false
 default['cookbook-openshift3']['openshift_node_minimum_container_ttl_duration'] = ''
 default['cookbook-openshift3']['openshift_node_maximum_dead_containers_per_container'] = ''
