@@ -135,7 +135,7 @@ default['cookbook-openshift3']['openshift_docker_hosted_router_image'] = node['c
 default['cookbook-openshift3']['openshift_docker_node_image'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'openshift3/node' : 'openshift/node'
 default['cookbook-openshift3']['openshift_docker_ovs_image'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'openshift3/openvswitch' : 'openshift/openvswitch'
 default['cookbook-openshift3']['openshift_docker_etcd_image'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? 'registry.access.redhat.com/rhel7/etcd' : 'quay.io/coreos/etcd'
-default['cookbook-openshift3']['openshift_docker_etcd_version'] = 'v3.2.22'
+default['cookbook-openshift3']['openshift_docker_etcd_version'] = node['cookbook-openshift3']['openshift_deployment_type'] =~ /enterprise/ ? '3.2.22' : 'v3.2.22'
 default['cookbook-openshift3']['openshift_master_config_dir'] = "#{node['cookbook-openshift3']['openshift_common_master_dir']}/master"
 default['cookbook-openshift3']['openshift_master_bind_addr'] = '0.0.0.0'
 default['cookbook-openshift3']['openshift_master_admission_plugin_config'] = {}
