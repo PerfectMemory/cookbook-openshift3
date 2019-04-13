@@ -14,11 +14,24 @@ action :delete do
   converge_by 'Uninstalling OpenShift' do
     helper = OpenShiftHelper::NodeHelper.new(node)
 
-    %W[#{node['cookbook-openshift3']['openshift_service_type']}-node openvswitch #{node['cookbook-openshift3']['openshift_service_type']}-master #{node['cookbook-openshift3']['openshift_service_type']}-master-api #{node['cookbook-openshift3']['openshift_service_type']}-master-controllers etcd etcd_container haproxy docker].each do |svc|
-      service svc do
-        action %i[stop disable]
-        ignore_failure true
-      end
+    log 'Starting uninstall' do
+      level :info
+      notifies :stop, 'service[docker]', :immediately
+      notifies :disable, 'service[docker]', :immediately
+      notifies :stop, "service[#{node['cookbook-openshift3']['openshift_service_type']}-node]", :immediately
+      notifies :disable, "service[#{node['cookbook-openshift3']['openshift_service_type']}-node]", :immediately
+      notifies :stop, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master]", :immediately
+      notifies :disable, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master]", :immediately
+      notifies :stop, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-api]", :immediately
+      notifies :disable, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-api]", :immediately
+      notifies :stop, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-controllers]", :immediately
+      notifies :disable, "service[#{node['cookbook-openshift3']['openshift_service_type']}-master-controllers]", :immediately
+      notifies :stop, 'service[openvswitch]', :immediately
+      notifies :disable, 'service[openvswitch]', :immediately
+      notifies :stop, 'service[etcd-service]', :immediately
+      notifies :disable, 'service[etcd-service]', :immediately
+      notifies :stop, 'service[haproxy]', :immediately
+      notifies :disable, 'service[haproxy]', :immediately
     end
 
     Mixlib::ShellOut.new('systemctl reset-failed').run_command
@@ -78,14 +91,17 @@ action :delete do
         helper.remove_dir('/etc/iptables.d/firewall_*')
         helper.remove_dir('/var/lib/origin/*')
         helper.remove_dir('/var/lib/docker/*')
+        helper.remove_dir('/etc/cni/net.d/*')
+        helper.remove_dir('/var/lib/cni/networks/*')
         helper.remove_dir("#{Chef::Config['file_cache_path']}/*")
       end
     end
 
     Mixlib::ShellOut.new('systemctl daemon-reload').run_command
 
-    service 'iptables' do
-      action :restart
+    log 'Finish uninstall' do
+      level :info
+      notifies :restart, 'service[iptables]', :immediately
     end
 
     execute '/usr/sbin/rebuild-iptables' do
