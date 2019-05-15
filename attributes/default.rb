@@ -4,6 +4,8 @@
 #
 # Copyright (c) 2015 The Authors, All Rights Reserved.
 
+require 'json'
+
 originrepos = [
   { 'name' => 'centos-openshift-origin14', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin14/', 'gpgcheck' => false },
   { 'name' => 'centos-openshift-origin15', 'baseurl' => 'http://mirror.centos.org/centos/7/paas/x86_64/openshift-origin15/', 'gpgcheck' => false },
@@ -14,13 +16,14 @@ originrepos = [
 ].freeze
 server_info = OpenShiftHelper::NodeHelper.new(node)
 
+default['cookbook-openshift3']['openshift_node_user_data'] = false
 default['cookbook-openshift3']['docker_signature_verification'] = 'false'
 default['cookbook-openshift3']['docker_signature_args'] = server_info.getdockerversion ? " --signature-verification=#{node['cookbook-openshift3']['docker_signature_verification']}" : ''
 default['cookbook-openshift3']['use_wildcard_nodes'] = false
 default['cookbook-openshift3']['custom_origin-dns'] = false
 default['cookbook-openshift3']['custom_origin_location'] = ''
 default['cookbook-openshift3']['wildcard_domain'] = ''
-default['cookbook-openshift3']['openshift_cluster_name'] = ''
+default['cookbook-openshift3']['openshift_cluster_name'] = node['cookbook-openshift3']['openshift_node_user_data'] && JSON.parse(node['ec2']['userdata']).key?('openshift_cluster_name') ? JSON.parse(node['ec2']['userdata'])['openshift_cluster_name'] : ''
 default['cookbook-openshift3']['openshift_HA'] = false
 default['cookbook-openshift3']['master_servers'] = []
 default['cookbook-openshift3']['etcd_servers'] = []
@@ -36,10 +39,11 @@ default['cookbook-openshift3']['customised_storage'] = false
 default['cookbook-openshift3']['customised_resources'] = '*'
 default['cookbook-openshift3']['set_openshift-infra_selector'] = false
 default['cookbook-openshift3']['openshift-infra-selector'] = 'region=infra'
+default['cookbook-openshift3']['user_plugin_config'] = {}
 
 if node['cookbook-openshift3']['openshift_HA'] || node['cookbook-openshift3']['ose_major_version'].split('.')[1].to_i >= 10
-  default['cookbook-openshift3']['openshift_common_api_hostname'] = node['cookbook-openshift3']['openshift_cluster_name']
-  default['cookbook-openshift3']['openshift_common_public_hostname'] = node['cookbook-openshift3']['openshift_common_api_hostname']
+  default['cookbook-openshift3']['openshift_common_api_hostname'] = node['cookbook-openshift3']['openshift_node_user_data'] && JSON.parse(node['ec2']['userdata']).key?('openshift_common_api_hostname') ? JSON.parse(node['ec2']['userdata'])['openshift_common_api_hostname'] : node['cookbook-openshift3']['openshift_cluster_name']
+  default['cookbook-openshift3']['openshift_common_public_hostname'] = node['cookbook-openshift3']['openshift_node_user_data'] && JSON.parse(node['ec2']['userdata']).key?('openshift_common_public_hostname') ? JSON.parse(node['ec2']['userdata'])['openshift_common_public_hostname'] : node['cookbook-openshift3']['openshift_common_api_hostname']
   default['cookbook-openshift3']['openshift_master_embedded_etcd'] = false
   default['cookbook-openshift3']['openshift_master_etcd_port'] = '2379'
   default['cookbook-openshift3']['master_etcd_cert_prefix'] = 'master.etcd-'
@@ -165,7 +169,7 @@ default['cookbook-openshift3']['openshift_master_pod_eviction_timeout'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_message'] = ''
 default['cookbook-openshift3']['openshift_master_project_request_template'] = ''
 default['cookbook-openshift3']['openshift_master_logout_url'] = nil
-default['cookbook-openshift3']['openshift_master_router_subdomain'] = 'cloudapps.domain.local'
+default['cookbook-openshift3']['openshift_master_router_subdomain'] = node['cookbook-openshift3']['openshift_node_user_data'] && JSON.parse(node['ec2']['userdata']).key?('openshift_master_router_subdomain') ? JSON.parse(node['ec2']['userdata'])['openshift_master_router_subdomain'] : 'cloudapps.domain.local'
 default['cookbook-openshift3']['openshift_master_sdn_cluster_network_cidr'] = '10.128.0.0/14'
 default['cookbook-openshift3']['openshift_master_sdn_host_subnet_length'] = '9'
 default['cookbook-openshift3']['openshift_master_saconfig_limitsecretreferences'] = false
@@ -213,7 +217,6 @@ default['cookbook-openshift3']['openshift_node_sdn_mtu_sdn'] = '1450'
 default['cookbook-openshift3']['openshift_node_disable_swap_on_host'] = true
 # Deprecated options (Use openshift_node_kubelet_args_custom instead)
 default['cookbook-openshift3']['openshift_node_max_pod'] = ''
-default['cookbook-openshift3']['openshift_node_user_data'] = false
 default['cookbook-openshift3']['openshift_node_image_config_latest'] = false
 default['cookbook-openshift3']['openshift_node_minimum_container_ttl_duration'] = ''
 default['cookbook-openshift3']['openshift_node_maximum_dead_containers_per_container'] = ''
